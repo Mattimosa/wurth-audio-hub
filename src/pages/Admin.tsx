@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Upload, FileAudio, Folder } from 'lucide-react';
+import { Upload, FileAudio, Folder, Play, Pause } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
 const Admin = () => {
@@ -25,15 +25,20 @@ const Admin = () => {
     title: "",
     description: "",
     author: "",
-    image: null,
-    audio: null,
+    image: null as File | null,
+    audio: null as File | null,
   });
   const [loading, setLoading] = useState(false);
   const [episodeData, setEpisodeData] = useState({
     episodeTitle: "",
     episodeDescription: "",
-    episodeAudio: null,
+    episodeAudio: null as File | null,
   });
+  
+  // Preview functionality
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   
   const categories = [
     "Digitale",
@@ -52,23 +57,37 @@ const Admin = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fileType: 'image' | 'audio') => {
     if (e.target.files && e.target.files[0]) {
-      setFormData(prev => ({ ...prev, [fileType]: e.target.files![0] }));
+      const file = e.target.files[0];
+      setFormData(prev => ({ ...prev, [fileType]: file }));
+      
+      if (fileType === 'audio') {
+        // Create URL for audio preview
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        const newPreviewUrl = URL.createObjectURL(file);
+        setPreviewUrl(newPreviewUrl);
+      }
       
       // Show a toast notification for file selection
       toast({
         title: "File selezionato",
-        description: `Hai selezionato: ${e.target.files[0].name}`,
+        description: `Hai selezionato: ${file.name}`,
       });
     }
   };
 
   const handleEpisodeFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setEpisodeData(prev => ({ ...prev, episodeAudio: e.target.files![0] }));
+      const file = e.target.files[0];
+      setEpisodeData(prev => ({ ...prev, episodeAudio: file }));
+      
+      // Create URL for audio preview
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      const newPreviewUrl = URL.createObjectURL(file);
+      setPreviewUrl(newPreviewUrl);
       
       toast({
         title: "Audio episodio selezionato",
-        description: `Hai selezionato: ${e.target.files[0].name}`,
+        description: `Hai selezionato: ${file.name}`,
       });
     }
   };
@@ -78,12 +97,29 @@ const Admin = () => {
     setEpisodeData(prev => ({ ...prev, [name]: value }));
   };
 
+  const togglePlayPreview = () => {
+    if (!audioRef.current) return;
+    
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play().catch(error => {
+        console.error("Error playing audio:", error);
+        toast({
+          title: "Errore riproduzione",
+          description: "Impossibile riprodurre il file audio",
+        });
+      });
+    }
+    setIsPlaying(!isPlaying);
+  };
+
   const handleSubmitPodcast = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     
     // This is a mock implementation that would connect to a backend
-    // In a real application, we would upload files and save data to a database
+    // In a real application, we would upload files to a storage service and save metadata to a database
     setTimeout(() => {
       toast({
         title: "Podcast creato con successo",
@@ -97,6 +133,7 @@ const Admin = () => {
         image: null,
         audio: null,
       });
+      setPreviewUrl(null);
       navigate("/digital");
     }, 1500);
   };
@@ -105,7 +142,7 @@ const Admin = () => {
     e.preventDefault();
     setLoading(true);
     
-    // Mock implementation
+    // Mock implementation for episode upload
     setTimeout(() => {
       toast({
         title: "Episodio aggiunto con successo",
@@ -117,8 +154,16 @@ const Admin = () => {
         episodeDescription: "",
         episodeAudio: null,
       });
+      setPreviewUrl(null);
     }, 1500);
   };
+
+  // Clean up object URLs when component unmounts
+  React.useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, []);
 
   return (
     <MainLayout>
@@ -211,6 +256,20 @@ const Admin = () => {
                     className="hidden"
                   />
                 </div>
+
+                {/* Preview section for image */}
+                {formData.image && (
+                  <div className="mt-2">
+                    <Label className="text-white">Anteprima immagine</Label>
+                    <div className="mt-2">
+                      <img 
+                        src={URL.createObjectURL(formData.image)} 
+                        alt="Preview" 
+                        className="max-h-40 rounded border border-gray-700" 
+                      />
+                    </div>
+                  </div>
+                )}
               </form>
             </CardContent>
             <CardFooter>
@@ -298,6 +357,34 @@ const Admin = () => {
                   />
                 </div>
                 
+                {/* Audio Preview Player */}
+                {previewUrl && (
+                  <div className="mt-4 p-4 border border-gray-700 rounded-md">
+                    <Label className="text-white mb-2 block">Anteprima Audio</Label>
+                    <div className="flex items-center space-x-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700 rounded-full p-2 h-10 w-10"
+                        onClick={togglePlayPreview}
+                      >
+                        {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                      </Button>
+                      <div className="flex-1">
+                        <audio 
+                          ref={audioRef} 
+                          src={previewUrl} 
+                          onEnded={() => setIsPlaying(false)}
+                          onPlay={() => setIsPlaying(true)}
+                          onPause={() => setIsPlaying(false)}
+                          className="w-full" 
+                          controls 
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="space-y-2">
                   <Label htmlFor="episodeDate" className="text-white">Data di pubblicazione</Label>
                   <Input 
@@ -337,9 +424,32 @@ const Admin = () => {
                       <p className="text-sm text-gray-400">12.4 MB • Caricato il 18/05/2025</p>
                     </div>
                   </div>
-                  <Button variant="outline" className="border-gray-700 text-white hover:bg-gray-700">
-                    Scarica
-                  </Button>
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant="outline" 
+                      className="border-gray-700 text-white hover:bg-gray-700"
+                      onClick={() => {
+                        toast({
+                          title: "Anteprima",
+                          description: "Riproduzione audio avviata",
+                        });
+                      }}
+                    >
+                      <Play className="h-4 w-4 mr-2" /> Anteprima
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="border-gray-700 text-white hover:bg-gray-700"
+                      onClick={() => {
+                        toast({
+                          title: "Download avviato",
+                          description: "Il file verrà scaricato a breve",
+                        });
+                      }}
+                    >
+                      Scarica
+                    </Button>
+                  </div>
                 </div>
                 
                 <div className="bg-gray-800 p-4 rounded-md flex items-center justify-between">
@@ -350,9 +460,32 @@ const Admin = () => {
                       <p className="text-sm text-gray-400">9.8 MB • Caricato il 20/05/2025</p>
                     </div>
                   </div>
-                  <Button variant="outline" className="border-gray-700 text-white hover:bg-gray-700">
-                    Scarica
-                  </Button>
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant="outline" 
+                      className="border-gray-700 text-white hover:bg-gray-700"
+                      onClick={() => {
+                        toast({
+                          title: "Anteprima",
+                          description: "Riproduzione audio avviata",
+                        });
+                      }}
+                    >
+                      <Play className="h-4 w-4 mr-2" /> Anteprima
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="border-gray-700 text-white hover:bg-gray-700"
+                      onClick={() => {
+                        toast({
+                          title: "Download avviato",
+                          description: "Il file verrà scaricato a breve",
+                        });
+                      }}
+                    >
+                      Scarica
+                    </Button>
+                  </div>
                 </div>
                 
                 <div className="bg-gray-800 p-4 rounded-md flex items-center justify-between">
@@ -363,9 +496,32 @@ const Admin = () => {
                       <p className="text-sm text-gray-400">15.2 MB • Caricato il 15/05/2025</p>
                     </div>
                   </div>
-                  <Button variant="outline" className="border-gray-700 text-white hover:bg-gray-700">
-                    Scarica
-                  </Button>
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant="outline" 
+                      className="border-gray-700 text-white hover:bg-gray-700"
+                      onClick={() => {
+                        toast({
+                          title: "Anteprima",
+                          description: "Riproduzione audio avviata",
+                        });
+                      }}
+                    >
+                      <Play className="h-4 w-4 mr-2" /> Anteprima
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="border-gray-700 text-white hover:bg-gray-700"
+                      onClick={() => {
+                        toast({
+                          title: "Download avviato",
+                          description: "Il file verrà scaricato a breve",
+                        });
+                      }}
+                    >
+                      Scarica
+                    </Button>
+                  </div>
                 </div>
               </div>
             </CardContent>
