@@ -1,7 +1,8 @@
 
 import React, { useContext } from 'react';
+import { Link } from 'react-router-dom';
 import { Play } from 'lucide-react';
-import { Podcast, PodcastEpisode } from '../data/podcasts';
+import { Podcast } from '../data/podcasts';
 import { MainLayoutContext } from '../layouts/MainLayout';
 
 interface PodcastCardProps {
@@ -10,9 +11,10 @@ interface PodcastCardProps {
 }
 
 const PodcastCard: React.FC<PodcastCardProps> = ({ podcast, size = 'medium' }) => {
-  const { setCurrentEpisode, setIsPlaying, currentEpisode } = useContext(MainLayoutContext);
+  const { setCurrentEpisode, setIsPlaying } = useContext(MainLayoutContext);
   
-  const handlePlayPodcast = () => {
+  const handlePlayPodcast = (e: React.MouseEvent) => {
+    e.preventDefault();
     if (podcast.episodes && podcast.episodes.length > 0) {
       const episode = podcast.episodes[0];
       setCurrentEpisode(episode);
@@ -34,8 +36,9 @@ const PodcastCard: React.FC<PodcastCardProps> = ({ podcast, size = 'medium' }) =
   };
   
   return (
-    <div 
-      className={`${containerClasses[size]} bg-wurth-gray rounded-md p-4 podcast-card-hover`}
+    <Link 
+      to={`/podcast/${podcast.id}`}
+      className={`${containerClasses[size]} bg-wurth-gray rounded-md p-4 podcast-card-hover block transition-transform hover:scale-105`}
     >
       <div className="relative group">
         <img 
@@ -52,7 +55,7 @@ const PodcastCard: React.FC<PodcastCardProps> = ({ podcast, size = 'medium' }) =
       </div>
       <h3 className="font-bold text-white line-clamp-2">{podcast.title}</h3>
       <p className="text-sm text-gray-400 mt-1">{podcast.author}</p>
-    </div>
+    </Link>
   );
 };
 

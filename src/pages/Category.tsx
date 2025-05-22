@@ -1,14 +1,22 @@
 
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import PodcastCard from '../components/PodcastCard';
-import { getPodcastsByCategory } from '../data/podcasts';
 import { Podcast, Headphones } from 'lucide-react';
+import { usePodcasts } from '../contexts/PodcastContext';
+import { MainLayoutContext } from '../layouts/MainLayout';
+import { useContext } from 'react';
 
 const Category = () => {
   const { categoryName = "Tutti" } = useParams<{ categoryName: string }>();
-  const podcasts = getPodcastsByCategory(categoryName);
+  const { podcasts } = usePodcasts();
+  const { setCurrentEpisode, setIsPlaying } = useContext(MainLayoutContext);
+  
+  // Filter podcasts by category
+  const filteredPodcasts = categoryName === "Tutti" 
+    ? podcasts 
+    : podcasts.filter(podcast => podcast.category === categoryName);
   
   // Set background colors based on category
   const getCategoryStyle = () => {
@@ -58,6 +66,13 @@ const Category = () => {
     }
     return <Podcast className="h-12 w-12 text-white opacity-80" />;
   };
+
+  const playEpisode = (podcast: any, episodeIndex: number) => {
+    if (podcast.episodes && podcast.episodes.length > episodeIndex) {
+      setCurrentEpisode(podcast.episodes[episodeIndex]);
+      setIsPlaying(true);
+    }
+  };
   
   return (
     <MainLayout>
@@ -72,20 +87,20 @@ const Category = () => {
               <p className="text-gray-200 mt-2">
                 {categoryName === "Tutti" 
                   ? "Tutti i podcast disponibili su Würth Podcast" 
-                  : `Podcast della categoria ${categoryName} - ${podcasts.length} serie disponibili`}
+                  : `Podcast della categoria ${categoryName} - ${filteredPodcasts.length} serie disponibili`}
               </p>
             </div>
           </div>
         </div>
         
-        {podcasts.length > 0 ? (
+        {filteredPodcasts.length > 0 ? (
           <>
             <div className="flex items-center mb-6">
               <Podcast className="mr-2 text-wurth-red" />
               <h2 className="text-xl font-bold text-white">Serie Podcast</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-              {podcasts.map((podcast) => (
+              {filteredPodcasts.map((podcast) => (
                 <PodcastCard key={podcast.id} podcast={podcast} />
               ))}
             </div>
@@ -95,33 +110,54 @@ const Category = () => {
                 <Headphones className="mr-2 text-wurth-red" />
                 <h2 className="text-xl font-bold text-white">Episodi Recenti</h2>
               </div>
-              <div className="space-y-4">
-                {podcasts.flatMap(podcast => 
-                  podcast.episodes.slice(0, 1).map(episode => (
-                    <div key={episode.id} className="bg-wurth-gray p-4 rounded-md hover:bg-gray-800 transition-colors">
-                      <div className="flex items-center">
-                        <img 
-                          src={episode.imageUrl} 
-                          alt={episode.title}
-                          className="w-16 h-16 object-cover rounded mr-4" 
-                        />
-                        <div className="flex-1">
-                          <h3 className="font-medium text-white">{episode.title}</h3>
-                          <p className="text-sm text-gray-400 line-clamp-1">{podcast.title}</p>
+              {filteredPodcasts.some(podcast => podcast.episodes.length > 0) ? (
+                <div className="space-y-4">
+                  {filteredPodcasts
+                    .filter(podcast => podcast.episodes.length > 0)
+                    .flatMap(podcast => 
+                      podcast.episodes.slice(0, 1).map(episode => (
+                        <div 
+                          key={episode.id} 
+                          className="bg-wurth-gray p-4 rounded-md hover:bg-gray-800 transition-colors cursor-pointer"
+                          onClick={() => playEpisode(podcast, podcast.episodes.findIndex((ep: any) => ep.id === episode.id))}
+                        >
+                          <div className="flex items-center">
+                            <img 
+                              src={episode.imageUrl} 
+                              alt={episode.title}
+                              className="w-16 h-16 object-cover rounded mr-4" 
+                            />
+                            <div className="flex-1">
+                              <h3 className="font-medium text-white">{episode.title}</h3>
+                              <Link to={`/podcast/${podcast.id}`} className="text-sm text-gray-400 line-clamp-1 hover:text-wurth-red">
+                                {podcast.title}
+                              </Link>
+                            </div>
+                            <div className="text-sm text-gray-400">
+                              {episode.duration}
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-sm text-gray-400">
-                          {episode.duration}
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
+                      ))
+                    )
+                  }
+                </div>
+              ) : (
+                <p className="text-gray-400 text-center py-8">
+                  Nessun episodio trovato per questa categoria. 
+                  <a href="/admin" className="text-wurth-red ml-1 hover:underline">
+                    Aggiungi un nuovo episodio
+                  </a>
+                </p>
+              )}
             </div>
           </>
         ) : (
           <div className="text-center py-12">
             <p className="text-gray-400">Nessun podcast trovato in questa categoria.</p>
+            <a href="/admin" className="text-wurth-red mt-2 inline-block hover:underline">
+              Aggiungi un nuovo podcast
+            </a>
           </div>
         )}
       </div>
