@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Home, Search, List, Podcast } from 'lucide-react';
+import { Home, Search, List, Podcast, Code, Layout } from 'lucide-react';
 import { categories } from '../data/podcasts';
 
 const Sidebar = () => {
@@ -10,7 +10,7 @@ const Sidebar = () => {
       <div className="p-6">
         <div className="flex items-center mb-8">
           <img 
-            src="https://www.wuerth.it/web/media/it/mam/logo/wuerth_logo_de.png" 
+            src="/lovable-uploads/687e7b12-6eff-44dc-b3c9-e8f7423844d7.png" 
             alt="Wurth Logo" 
             className="h-10" 
           />
@@ -35,6 +35,15 @@ const Sidebar = () => {
               >
                 <Search className="w-5 h-5 mr-3" />
                 <span className="text-sm font-medium">Cerca</span>
+              </Link>
+            </li>
+            <li>
+              <Link 
+                to="/digital" 
+                className="flex items-center bg-wurth-red/20 text-wurth-red font-bold py-2 px-3 rounded-md transition-colors"
+              >
+                <Code className="w-5 h-5 mr-3" />
+                <span className="text-sm font-medium">Digitale</span>
               </Link>
             </li>
             <li>
