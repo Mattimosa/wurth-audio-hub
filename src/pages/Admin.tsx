@@ -1,7 +1,6 @@
 
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { v4 as uuidv4 } from 'uuid';
 import MainLayout from '../layouts/MainLayout';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,29 +14,25 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Upload, FileAudio, Play, Pause } from 'lucide-react';
+import { Upload, FileAudio, Folder, Play, Pause } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
-import { usePodcasts } from '../contexts/PodcastContext';
 
 const Admin = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { podcasts, addPodcast, addEpisode, uploadedFiles, addUploadedFile } = usePodcasts();
-  
   const [selectedCategory, setSelectedCategory] = useState("Digitale");
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     author: "",
     image: null as File | null,
+    audio: null as File | null,
   });
   const [loading, setLoading] = useState(false);
-  const [selectedPodcastId, setSelectedPodcastId] = useState("");
   const [episodeData, setEpisodeData] = useState({
     episodeTitle: "",
     episodeDescription: "",
     episodeAudio: null as File | null,
-    episodeDate: new Date().toISOString().split('T')[0],
   });
   
   // Preview functionality
@@ -60,10 +55,17 @@ const Admin = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fileType: 'image') => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fileType: 'image' | 'audio') => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setFormData(prev => ({ ...prev, [fileType]: file }));
+      
+      if (fileType === 'audio') {
+        // Create URL for audio preview
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        const newPreviewUrl = URL.createObjectURL(file);
+        setPreviewUrl(newPreviewUrl);
+      }
       
       // Show a toast notification for file selection
       toast({
@@ -116,142 +118,44 @@ const Admin = () => {
     e.preventDefault();
     setLoading(true);
     
-    // Create a new podcast object
-    const newPodcastId = uuidv4();
-    
-    // Create image URL (in a real app this would upload to storage)
-    let imageUrl = "https://images.unsplash.com/photo-1526628953301-3e589a6a8b74";
-    if (formData.image) {
-      imageUrl = URL.createObjectURL(formData.image);
-      
-      // Save the uploaded file info
-      addUploadedFile({
-        id: uuidv4(),
-        name: formData.image.name,
-        url: imageUrl,
-        type: 'image',
-        date: new Date().toLocaleDateString()
+    // This is a mock implementation that would connect to a backend
+    // In a real application, we would upload files to a storage service and save metadata to a database
+    setTimeout(() => {
+      toast({
+        title: "Podcast creato con successo",
+        description: "Il nuovo podcast è stato aggiunto alla piattaforma",
       });
-    }
-    
-    const newPodcast = {
-      id: newPodcastId,
-      title: formData.title,
-      description: formData.description,
-      imageUrl: imageUrl,
-      category: selectedCategory,
-      author: formData.author,
-      episodes: []
-    };
-    
-    // Add the podcast to context
-    addPodcast(newPodcast);
-    
-    toast({
-      title: "Podcast creato con successo",
-      description: "Il nuovo podcast è stato aggiunto alla piattaforma",
-    });
-    
-    setLoading(false);
-    setFormData({
-      title: "",
-      description: "",
-      author: "",
-      image: null,
-    });
-    
-    // Navigate to the new podcast page
-    navigate(`/podcast/${newPodcastId}`);
+      setLoading(false);
+      setFormData({
+        title: "",
+        description: "",
+        author: "",
+        image: null,
+        audio: null,
+      });
+      setPreviewUrl(null);
+      navigate("/digital");
+    }, 1500);
   };
 
   const handleSubmitEpisode = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!selectedPodcastId) {
-      toast({
-        title: "Errore",
-        description: "Seleziona un podcast",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (!episodeData.episodeAudio) {
-      toast({
-        title: "Errore",
-        description: "Seleziona un file audio",
-        variant: "destructive"
-      });
-      return;
-    }
-    
     setLoading(true);
     
-    // Create audio URL (in a real app this would upload to storage)
-    const audioUrl = URL.createObjectURL(episodeData.episodeAudio);
-    
-    // Save the uploaded file info
-    const fileId = uuidv4();
-    addUploadedFile({
-      id: fileId,
-      name: episodeData.episodeAudio.name,
-      url: audioUrl,
-      type: 'audio',
-      date: new Date().toLocaleDateString()
-    });
-    
-    // Get the selected podcast
-    const podcast = podcasts.find(p => p.id === selectedPodcastId);
-    
-    if (!podcast) {
+    // Mock implementation for episode upload
+    setTimeout(() => {
       toast({
-        title: "Errore",
-        description: "Podcast non trovato",
-        variant: "destructive"
+        title: "Episodio aggiunto con successo",
+        description: "Il nuovo episodio è stato aggiunto al podcast",
       });
       setLoading(false);
-      return;
-    }
-    
-    // Calculate duration (in a real app this would be extracted from the audio file)
-    const randomMinutes = Math.floor(Math.random() * 40) + 10;
-    const randomSeconds = Math.floor(Math.random() * 60);
-    const duration = `${randomMinutes}:${randomSeconds < 10 ? '0' + randomSeconds : randomSeconds}`;
-    
-    // Create new episode
-    const newEpisode = {
-      id: fileId,
-      title: episodeData.episodeTitle,
-      description: episodeData.episodeDescription,
-      imageUrl: podcast.imageUrl, // Use podcast image for the episode
-      audioUrl: audioUrl,
-      duration: duration,
-      date: new Date(episodeData.episodeDate).toLocaleDateString('it-IT', { 
-        day: 'numeric', 
-        month: 'short', 
-        year: 'numeric' 
-      })
-    };
-    
-    // Add the episode to the podcast
-    addEpisode(selectedPodcastId, newEpisode);
-    
-    toast({
-      title: "Episodio aggiunto con successo",
-      description: "Il nuovo episodio è stato aggiunto al podcast",
-    });
-    
-    setLoading(false);
-    setEpisodeData({
-      episodeTitle: "",
-      episodeDescription: "",
-      episodeAudio: null,
-      episodeDate: new Date().toISOString().split('T')[0],
-    });
-    setPreviewUrl(null);
-    
-    // Navigate to the podcast page
-    navigate(`/podcast/${selectedPodcastId}`);
+      setEpisodeData({
+        episodeTitle: "",
+        episodeDescription: "",
+        episodeAudio: null,
+      });
+      setPreviewUrl(null);
+    }, 1500);
   };
 
   // Clean up object URLs when component unmounts
@@ -391,17 +295,15 @@ const Admin = () => {
                   <Label htmlFor="podcastSelect" className="text-white">Seleziona Podcast</Label>
                   <select 
                     id="podcastSelect"
-                    value={selectedPodcastId}
-                    onChange={(e) => setSelectedPodcastId(e.target.value)}
                     className="w-full rounded-md border border-gray-700 bg-gray-800 text-white p-2"
                     required
                   >
-                    <option value="">-- Seleziona un podcast --</option>
-                    {podcasts.map((podcast) => (
-                      <option key={podcast.id} value={podcast.id}>
-                        {podcast.title}
-                      </option>
-                    ))}
+                    <option value="1">Innovazioni nel settore delle costruzioni</option>
+                    <option value="2">Automotive Solutions</option>
+                    <option value="3">Industria 4.0</option>
+                    <option value="d1">Innovazione Digitale Würth</option>
+                    <option value="d2">App e Servizi Würth</option>
+                    <option value="d3">E-Commerce e Soluzioni Online</option>
                   </select>
                 </div>
                 
@@ -487,10 +389,7 @@ const Admin = () => {
                   <Label htmlFor="episodeDate" className="text-white">Data di pubblicazione</Label>
                   <Input 
                     id="episodeDate" 
-                    name="episodeDate"
                     type="date"
-                    value={episodeData.episodeDate}
-                    onChange={handleEpisodeInputChange}
                     className="bg-gray-800 border-gray-700 text-white"
                     required
                   />
@@ -501,7 +400,7 @@ const Admin = () => {
               <Button 
                 onClick={handleSubmitEpisode} 
                 className="w-full bg-wurth-red hover:bg-wurth-red/90"
-                disabled={loading || !selectedPodcastId || !episodeData.episodeAudio}
+                disabled={loading}
               >
                 {loading ? 'Caricamento in corso...' : 'Aggiungi Episodio'}
               </Button>
@@ -512,63 +411,119 @@ const Admin = () => {
         <div className="mt-8">
           <Card className="bg-wurth-gray text-white border-gray-700">
             <CardHeader>
-              <CardTitle>File Caricati</CardTitle>
+              <CardTitle>Gestione File</CardTitle>
               <CardDescription className="text-gray-400">Gestisci i file dei podcast caricati</CardDescription>
             </CardHeader>
             <CardContent>
-              {uploadedFiles.length > 0 ? (
-                <div className="grid grid-cols-1 gap-4">
-                  {uploadedFiles.map((file) => (
-                    <div key={file.id} className="bg-gray-800 p-4 rounded-md flex items-center justify-between">
-                      <div className="flex items-center">
-                        <FileAudio className="h-8 w-8 mr-3 text-wurth-red" />
-                        <div>
-                          <h3 className="font-medium">{file.name}</h3>
-                          <p className="text-sm text-gray-400">Caricato il {file.date}</p>
-                        </div>
-                      </div>
-                      <div className="flex space-x-2">
-                        {file.type === 'audio' && (
-                          <Button 
-                            variant="outline" 
-                            className="border-gray-700 text-white hover:bg-gray-700"
-                            onClick={() => {
-                              // Open the audio in a new tab
-                              window.open(file.url, '_blank');
-                            }}
-                          >
-                            <Play className="h-4 w-4 mr-2" /> Anteprima
-                          </Button>
-                        )}
-                        <Button 
-                          variant="outline" 
-                          className="border-gray-700 text-white hover:bg-gray-700"
-                          onClick={() => {
-                            // Create a download link
-                            const link = document.createElement('a');
-                            link.href = file.url;
-                            link.download = file.name;
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                            
-                            toast({
-                              title: "Download avviato",
-                              description: "Il file verrà scaricato a breve",
-                            });
-                          }}
-                        >
-                          Scarica
-                        </Button>
-                      </div>
+              <div className="grid grid-cols-1 gap-4">
+                <div className="bg-gray-800 p-4 rounded-md flex items-center justify-between">
+                  <div className="flex items-center">
+                    <FileAudio className="h-8 w-8 mr-3 text-wurth-red" />
+                    <div>
+                      <h3 className="font-medium">Episodio_1_Digitale.mp3</h3>
+                      <p className="text-sm text-gray-400">12.4 MB • Caricato il 18/05/2025</p>
                     </div>
-                  ))}
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant="outline" 
+                      className="border-gray-700 text-white hover:bg-gray-700"
+                      onClick={() => {
+                        toast({
+                          title: "Anteprima",
+                          description: "Riproduzione audio avviata",
+                        });
+                      }}
+                    >
+                      <Play className="h-4 w-4 mr-2" /> Anteprima
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="border-gray-700 text-white hover:bg-gray-700"
+                      onClick={() => {
+                        toast({
+                          title: "Download avviato",
+                          description: "Il file verrà scaricato a breve",
+                        });
+                      }}
+                    >
+                      Scarica
+                    </Button>
+                  </div>
                 </div>
-              ) : (
-                <div className="text-center py-8 text-gray-400">
-                  Nessun file caricato. Aggiungi un podcast o un episodio per visualizzare i file caricati.
+                
+                <div className="bg-gray-800 p-4 rounded-md flex items-center justify-between">
+                  <div className="flex items-center">
+                    <FileAudio className="h-8 w-8 mr-3 text-wurth-red" />
+                    <div>
+                      <h3 className="font-medium">Episodio_2_Digitale.mp3</h3>
+                      <p className="text-sm text-gray-400">9.8 MB • Caricato il 20/05/2025</p>
+                    </div>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant="outline" 
+                      className="border-gray-700 text-white hover:bg-gray-700"
+                      onClick={() => {
+                        toast({
+                          title: "Anteprima",
+                          description: "Riproduzione audio avviata",
+                        });
+                      }}
+                    >
+                      <Play className="h-4 w-4 mr-2" /> Anteprima
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="border-gray-700 text-white hover:bg-gray-700"
+                      onClick={() => {
+                        toast({
+                          title: "Download avviato",
+                          description: "Il file verrà scaricato a breve",
+                        });
+                      }}
+                    >
+                      Scarica
+                    </Button>
+                  </div>
                 </div>
-              )}
+                
+                <div className="bg-gray-800 p-4 rounded-md flex items-center justify-between">
+                  <div className="flex items-center">
+                    <FileAudio className="h-8 w-8 mr-3 text-wurth-red" />
+                    <div>
+                      <h3 className="font-medium">Innovazione_Episodio_1.mp3</h3>
+                      <p className="text-sm text-gray-400">15.2 MB • Caricato il 15/05/2025</p>
+                    </div>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant="outline" 
+                      className="border-gray-700 text-white hover:bg-gray-700"
+                      onClick={() => {
+                        toast({
+                          title: "Anteprima",
+                          description: "Riproduzione audio avviata",
+                        });
+                      }}
+                    >
+                      <Play className="h-4 w-4 mr-2" /> Anteprima
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      className="border-gray-700 text-white hover:bg-gray-700"
+                      onClick={() => {
+                        toast({
+                          title: "Download avviato",
+                          description: "Il file verrà scaricato a breve",
+                        });
+                      }}
+                    >
+                      Scarica
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>

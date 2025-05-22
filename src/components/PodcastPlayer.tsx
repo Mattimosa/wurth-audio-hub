@@ -14,18 +14,15 @@ const PodcastPlayer: React.FC<PodcastPlayerProps> = ({ episode }) => {
   const [progress, setProgress] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
   const [currentTime, setCurrentTime] = useState<number>(0);
-  const [error, setError] = useState<string | null>(null);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
   useEffect(() => {
-    // Create new audio element when episode changes
-    const audio = new Audio();
+    const audio = new Audio(episode.audioUrl);
     audioRef.current = audio;
     
     const setAudioData = () => {
       setDuration(audio.duration);
-      setError(null);
     };
     
     const setAudioTime = () => {
@@ -33,58 +30,22 @@ const PodcastPlayer: React.FC<PodcastPlayerProps> = ({ episode }) => {
       setProgress((audio.currentTime / audio.duration) * 100);
     };
     
-    const handleError = (e: Event) => {
-      console.error("Error playing audio:", e);
-      setError("Impossibile riprodurre l'audio");
-      setIsPlaying(false);
-    };
-    
     // Add event listeners
     audio.addEventListener('loadeddata', setAudioData);
     audio.addEventListener('timeupdate', setAudioTime);
-    audio.addEventListener('error', handleError);
     
-    // Set the source and try to load it
-    audio.src = episode.audioUrl;
-    audio.load();
-    
-    // Play if isPlaying is true
+    // Play audio if isPlaying is true
     if (isPlaying) {
-      audio.play().catch(error => {
-        console.error("Error playing audio:", error);
-        setError("Impossibile riprodurre l'audio");
-        setIsPlaying(false);
-      });
+      audio.play().catch(error => console.error("Error playing audio:", error));
     }
-    
-    // Set volume
-    audio.volume = volume / 100;
     
     return () => {
       audio.pause();
-      audio.src = '';
       audio.removeEventListener('loadeddata', setAudioData);
       audio.removeEventListener('timeupdate', setAudioTime);
-      audio.removeEventListener('error', handleError);
     };
-  }, [episode, setIsPlaying]);
+  }, [episode, isPlaying]);
   
-  // Handle play/pause state changes
-  useEffect(() => {
-    if (!audioRef.current) return;
-    
-    if (isPlaying) {
-      audioRef.current.play().catch(error => {
-        console.error("Error playing audio:", error);
-        setError("Impossibile riprodurre l'audio");
-        setIsPlaying(false);
-      });
-    } else {
-      audioRef.current.pause();
-    }
-  }, [isPlaying, setIsPlaying]);
-  
-  // Handle volume changes
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = volume / 100;
@@ -92,14 +53,14 @@ const PodcastPlayer: React.FC<PodcastPlayerProps> = ({ episode }) => {
   }, [volume]);
   
   const togglePlay = () => {
-    if (error) {
-      // If there was an error, try to reload the audio
-      if (audioRef.current) {
-        audioRef.current.load();
-        setError(null);
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play().catch(error => console.error("Error playing audio:", error));
       }
+      setIsPlaying(!isPlaying);
     }
-    setIsPlaying(!isPlaying);
   };
   
   const handleProgressChange = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -144,7 +105,6 @@ const PodcastPlayer: React.FC<PodcastPlayerProps> = ({ episode }) => {
         <div className="mr-6">
           <h4 className="text-sm font-medium text-white line-clamp-1">{episode.title}</h4>
           <p className="text-xs text-gray-400">{episode.description}</p>
-          {error && <p className="text-xs text-wurth-red mt-1">{error}</p>}
         </div>
       </div>
       
