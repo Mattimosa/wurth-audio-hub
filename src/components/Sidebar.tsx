@@ -1,10 +1,12 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Home, Search, List, Podcast, Code, Layout } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { Home, Search, List, Podcast, Code, Layout, Settings } from 'lucide-react';
 import { categories } from '../data/podcasts';
 
 const Sidebar = () => {
+  const location = useLocation();
+  
   return (
     <aside className="w-64 h-screen bg-sidebar flex-shrink-0 overflow-y-auto">
       <div className="p-6">
@@ -22,7 +24,7 @@ const Sidebar = () => {
             <li>
               <Link 
                 to="/" 
-                className="flex items-center text-gray-300 hover:text-wurth-red transition-colors"
+                className={`flex items-center ${location.pathname === '/' ? 'bg-wurth-red/20 text-wurth-red font-bold py-2 px-3 rounded-md' : 'text-gray-300 hover:text-wurth-red'} transition-colors`}
               >
                 <Home className="w-5 h-5 mr-3" />
                 <span className="text-sm font-medium">Home</span>
@@ -31,7 +33,7 @@ const Sidebar = () => {
             <li>
               <Link 
                 to="/search" 
-                className="flex items-center text-gray-300 hover:text-wurth-red transition-colors"
+                className={`flex items-center ${location.pathname === '/search' ? 'bg-wurth-red/20 text-wurth-red font-bold py-2 px-3 rounded-md' : 'text-gray-300 hover:text-wurth-red'} transition-colors`}
               >
                 <Search className="w-5 h-5 mr-3" />
                 <span className="text-sm font-medium">Cerca</span>
@@ -40,7 +42,7 @@ const Sidebar = () => {
             <li>
               <Link 
                 to="/digital" 
-                className="flex items-center bg-wurth-red/20 text-wurth-red font-bold py-2 px-3 rounded-md transition-colors"
+                className={`flex items-center ${location.pathname === '/digital' ? 'bg-wurth-red/20 text-wurth-red font-bold py-2 px-3 rounded-md' : 'text-gray-300 hover:text-wurth-red'} transition-colors`}
               >
                 <Code className="w-5 h-5 mr-3" />
                 <span className="text-sm font-medium">Digitale</span>
@@ -49,10 +51,19 @@ const Sidebar = () => {
             <li>
               <Link 
                 to="/library" 
-                className="flex items-center text-gray-300 hover:text-wurth-red transition-colors"
+                className={`flex items-center ${location.pathname === '/library' ? 'bg-wurth-red/20 text-wurth-red font-bold py-2 px-3 rounded-md' : 'text-gray-300 hover:text-wurth-red'} transition-colors`}
               >
                 <List className="w-5 h-5 mr-3" />
                 <span className="text-sm font-medium">La tua libreria</span>
+              </Link>
+            </li>
+            <li>
+              <Link 
+                to="/admin" 
+                className={`flex items-center ${location.pathname === '/admin' ? 'bg-wurth-red/20 text-wurth-red font-bold py-2 px-3 rounded-md' : 'text-gray-300 hover:text-wurth-red'} transition-colors`}
+              >
+                <Settings className="w-5 h-5 mr-3" />
+                <span className="text-sm font-medium">Amministrazione</span>
               </Link>
             </li>
           </ul>
@@ -65,7 +76,7 @@ const Sidebar = () => {
               <li key={category}>
                 <Link 
                   to={`/category/${category}`} 
-                  className="flex items-center text-gray-300 hover:text-wurth-red transition-colors py-1"
+                  className={`flex items-center ${location.pathname === `/category/${category}` ? 'text-wurth-red' : 'text-gray-300 hover:text-wurth-red'} transition-colors py-1`}
                 >
                   <Podcast className="w-4 h-4 mr-3" />
                   <span className="text-sm">{category}</span>
