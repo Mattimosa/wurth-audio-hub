@@ -22,7 +22,7 @@ export async function fetchCategories(): Promise<Category[]> {
 export async function fetchSeriesByCategory(categorySlug?: string): Promise<Series[]> {
   let query = supabase.from('series').select(`
     *,
-    categories(name, slug)
+    categories(id, name, slug)
   `);
   
   if (categorySlug && categorySlug !== 'all') {
@@ -45,7 +45,7 @@ export async function fetchSeriesBySlug(slug: string): Promise<Series | null> {
     .from('series')
     .select(`
       *,
-      categories(name, slug)
+      categories(id, name, slug)
     `)
     .eq('slug', slug)
     .single();
@@ -197,7 +197,7 @@ export async function getRecentEpisodes(limit = 5): Promise<Episode[]> {
     .from('episodes')
     .select(`
       *,
-      series(title, slug, cover_url)
+      series(*)
     `)
     .order('published_at', { ascending: false })
     .limit(limit);
@@ -224,7 +224,7 @@ export async function searchContent(query: string): Promise<{ series: Series[], 
     .from('episodes')
     .select(`
       *,
-      series(title, slug)
+      series(*)
     `)
     .ilike('title', `%${query}%`)
     .limit(5);
