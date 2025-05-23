@@ -14,17 +14,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Upload, FileAudio, Play, Pause, CheckCircle, AlertCircle } from 'lucide-react';
+import { Upload, FileAudio, Play, Pause, CheckCircle, Mic, Radio, Zap } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { createSeries, createEpisode, fetchCategories, fetchSeriesByCategory, getAudioDuration } from '../lib/podcastUtils';
 import { slugify } from '../lib/utils';
 import { Category, Series } from '../types/podcast';
-import { useAuth } from '../lib/AuthContext';
 
 const Admin = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { user, isAdmin, isEditor } = useAuth();
   
   const [categories, setCategories] = useState<Category[]>([]);
   const [seriesList, setSeriesList] = useState<Series[]>([]);
@@ -71,17 +69,6 @@ const Admin = () => {
     
     loadInitialData();
   }, []);
-  
-  useEffect(() => {
-    if (user && !isAdmin && !isEditor) {
-      toast({
-        title: "Accesso negato",
-        description: "Non hai i permessi necessari per accedere a questa pagina.",
-        variant: "destructive"
-      });
-      navigate('/');
-    }
-  }, [user, isAdmin, isEditor, navigate, toast]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -105,8 +92,8 @@ const Admin = () => {
       setCoverPreview(previewUrl);
       
       toast({
-        title: "Immagine selezionata",
-        description: `Hai selezionato: ${file.name}`,
+        title: "✨ Cover selezionata",
+        description: `${file.name} caricata con successo`,
       });
     }
   };
@@ -130,8 +117,8 @@ const Admin = () => {
       setAudioDuration(duration);
       
       toast({
-        title: "Audio selezionato",
-        description: `Hai selezionato: ${file.name} (${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')})`,
+        title: "🎵 Audio caricato",
+        description: `${file.name} - Durata: ${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}`,
       });
     }
   };
@@ -146,8 +133,8 @@ const Admin = () => {
       setEpisodeCoverPreview(previewUrl);
       
       toast({
-        title: "Immagine episodio selezionata",
-        description: `Hai selezionato: ${file.name}`,
+        title: "📸 Cover episodio aggiunta",
+        description: `${file.name} pronta per il caricamento`,
       });
     }
   };
@@ -175,7 +162,7 @@ const Admin = () => {
     
     if (!selectedCategory) {
       toast({
-        title: "Categoria obbligatoria",
+        title: "❌ Categoria richiesta",
         description: "Seleziona una categoria per la serie",
         variant: "destructive"
       });
@@ -196,26 +183,24 @@ const Admin = () => {
       
       if (newSeries) {
         toast({
-          title: "Serie creata con successo",
-          description: "La nuova serie podcast è stata aggiunta",
+          title: "🎉 Serie creata con successo!",
+          description: `"${formData.title}" è ora disponibile sulla piattaforma`,
         });
         
-        setFormData({
-          title: "",
-          description: "",
-          slug: "",
-        });
+        // Reset form
+        setFormData({ title: "", description: "", slug: "" });
         setCoverFile(null);
         if (coverPreview) {
           URL.revokeObjectURL(coverPreview);
           setCoverPreview(null);
         }
         
+        // Reload series list
         const updatedSeries = await fetchSeriesByCategory();
         setSeriesList(updatedSeries);
       } else {
         toast({
-          title: "Errore",
+          title: "❌ Errore",
           description: "Impossibile creare la serie podcast",
           variant: "destructive"
         });
@@ -223,8 +208,8 @@ const Admin = () => {
     } catch (error) {
       console.error("Error creating series:", error);
       toast({
-        title: "Errore",
-        description: "Si è verificato un errore durante la creazione della serie",
+        title: "❌ Errore del sistema",
+        description: "Si è verificato un errore durante la creazione",
         variant: "destructive"
       });
     } finally {
@@ -237,7 +222,7 @@ const Admin = () => {
     
     if (!episodeData.seriesId) {
       toast({
-        title: "Serie obbligatoria",
+        title: "📺 Serie richiesta",
         description: "Seleziona una serie per l'episodio",
         variant: "destructive"
       });
@@ -246,7 +231,7 @@ const Admin = () => {
     
     if (!episodeAudioFile) {
       toast({
-        title: "Audio obbligatorio",
+        title: "🎵 Audio richiesto",
         description: "Carica un file audio per l'episodio",
         variant: "destructive"
       });
@@ -271,15 +256,12 @@ const Admin = () => {
       
       if (newEpisode) {
         toast({
-          title: "Episodio creato con successo",
-          description: "Il nuovo episodio è stato aggiunto alla serie",
+          title: "🚀 Episodio pubblicato!",
+          description: `"${episodeData.title}" è ora in diretta e disponibile per l'ascolto`,
         });
         
-        setEpisodeData({
-          seriesId: "",
-          title: "",
-          description: "",
-        });
+        // Reset form
+        setEpisodeData({ seriesId: "", title: "", description: "" });
         setEpisodeAudioFile(null);
         setEpisodeCoverFile(null);
         setAudioDuration(0);
@@ -293,16 +275,16 @@ const Admin = () => {
         }
       } else {
         toast({
-          title: "Errore",
-          description: "Impossibile creare l'episodio",
+          title: "❌ Errore",
+          description: "Impossibile pubblicare l'episodio",
           variant: "destructive"
         });
       }
     } catch (error) {
       console.error("Error creating episode:", error);
       toast({
-        title: "Errore",
-        description: "Si è verificato un errore durante la creazione dell'episodio",
+        title: "❌ Errore di pubblicazione",
+        description: "Si è verificato un errore durante il caricamento",
         variant: "destructive"
       });
     } finally {
@@ -318,81 +300,113 @@ const Admin = () => {
     };
   }, []);
 
-  if (!isAdmin && !isEditor) {
-    return (
-      <MainLayout>
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <AlertCircle className="h-16 w-16 text-wurth-red mx-auto mb-4" />
-            <h1 className="text-3xl font-bold text-white mb-4">Accesso negato</h1>
-            <p className="text-gray-400">Non hai i permessi necessari per accedere a questa pagina.</p>
-          </div>
-        </div>
-      </MainLayout>
-    );
-  }
-
   return (
     <MainLayout>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-6">Amministrazione Podcast</h1>
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center mb-4">
+            <div className="w-12 h-12 bg-wurth-red rounded-full flex items-center justify-center mr-4">
+              <Mic className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold text-white">Studio Würth</h1>
+              <p className="text-gray-400">Crea e pubblica i tuoi contenuti audio</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <Card className="bg-gradient-to-r from-green-600 to-green-500 border-none text-white">
+              <CardContent className="p-4 flex items-center">
+                <Radio className="h-8 w-8 mr-3" />
+                <div>
+                  <div className="text-2xl font-bold">{seriesList.length}</div>
+                  <div className="text-sm opacity-90">Serie attive</div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-gradient-to-r from-blue-600 to-blue-500 border-none text-white">
+              <CardContent className="p-4 flex items-center">
+                <Zap className="h-8 w-8 mr-3" />
+                <div>
+                  <div className="text-2xl font-bold">Live</div>
+                  <div className="text-sm opacity-90">Pubblicazione istantanea</div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-gradient-to-r from-purple-600 to-purple-500 border-none text-white">
+              <CardContent className="p-4 flex items-center">
+                <CheckCircle className="h-8 w-8 mr-3" />
+                <div>
+                  <div className="text-2xl font-bold">Pronto</div>
+                  <div className="text-sm opacity-90">Sistema operativo</div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
           {/* Create New Series */}
           <Card className="bg-wurth-gray text-white border-gray-700">
             <CardHeader>
-              <CardTitle>Crea Nuova Serie Podcast</CardTitle>
-              <CardDescription className="text-gray-400">Aggiungi una nuova serie podcast alla piattaforma</CardDescription>
+              <CardTitle className="flex items-center">
+                <Radio className="mr-2 text-wurth-red" />
+                Nuova Serie Podcast
+              </CardTitle>
+              <CardDescription className="text-gray-400">
+                Crea una nuova serie per organizzare i tuoi episodi
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmitSeries} className="space-y-4">
+              <form onSubmit={handleSubmitSeries} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="title" className="text-white">Titolo della Serie</Label>
+                  <Label htmlFor="title" className="text-white font-medium">Titolo della Serie</Label>
                   <Input 
                     id="title" 
                     name="title"
                     value={formData.title}
                     onChange={handleInputChange}
-                    placeholder="Inserisci il titolo della serie podcast"
+                    placeholder="es. Innovazione Würth, Storie di Successo..."
                     required
-                    className="bg-gray-800 border-gray-700 text-white"
+                    className="bg-gray-800 border-gray-600 text-white placeholder:text-gray-400 focus:border-wurth-red"
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="description" className="text-white">Descrizione</Label>
+                  <Label htmlFor="description" className="text-white font-medium">Descrizione</Label>
                   <Textarea 
                     id="description" 
                     name="description"
                     value={formData.description}
                     onChange={handleInputChange}
-                    placeholder="Descrivi la serie podcast"
+                    placeholder="Racconta di cosa parla questa serie..."
                     required
-                    className="bg-gray-800 border-gray-700 text-white min-h-[120px]"
+                    className="bg-gray-800 border-gray-600 text-white placeholder:text-gray-400 min-h-[100px] focus:border-wurth-red"
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="slug" className="text-white">Slug (URL)</Label>
+                  <Label htmlFor="slug" className="text-white font-medium">URL (generato automaticamente)</Label>
                   <Input 
                     id="slug" 
                     name="slug"
                     value={formData.slug}
                     onChange={handleInputChange}
-                    placeholder="url-friendly-slug"
+                    placeholder="url-della-serie"
                     required
-                    className="bg-gray-800 border-gray-700 text-white"
+                    className="bg-gray-800 border-gray-600 text-white focus:border-wurth-red"
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="category" className="text-white">Categoria</Label>
+                  <Label htmlFor="category" className="text-white font-medium">Categoria</Label>
                   <select 
                     id="category"
                     name="category"
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="w-full rounded-md border border-gray-700 bg-gray-800 text-white p-2"
+                    className="w-full rounded-md border border-gray-600 bg-gray-800 text-white p-3 focus:border-wurth-red focus:outline-none"
                     required
                   >
                     <option value="">Seleziona una categoria</option>
@@ -402,52 +416,45 @@ const Admin = () => {
                   </select>
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="cover" className="text-white">Immagine di copertina</Label>
-                  <div className="flex items-center space-x-2">
-                    <Button 
-                      type="button" 
-                      variant="outline"
-                      onClick={() => document.getElementById('coverFile')?.click()}
-                      className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700"
-                    >
-                      <Upload className="mr-2 h-4 w-4" /> Seleziona immagine
-                    </Button>
-                    <span className="text-sm text-gray-400">
-                      {coverFile ? coverFile.name : 'Nessun file selezionato'}
-                    </span>
-                    {coverFile && <CheckCircle className="h-4 w-4 text-green-400" />}
+                <div className="space-y-4">
+                  <Label className="text-white font-medium">Cover della Serie</Label>
+                  <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-wurth-red transition-colors">
+                    <input 
+                      type="file"
+                      id="coverFile"
+                      accept="image/*"
+                      onChange={handleCoverFileChange}
+                      className="hidden"
+                    />
+                    <label htmlFor="coverFile" className="cursor-pointer">
+                      {coverPreview ? (
+                        <div>
+                          <img 
+                            src={coverPreview} 
+                            alt="Preview" 
+                            className="max-h-40 mx-auto rounded mb-4" 
+                          />
+                          <p className="text-sm text-gray-400">Clicca per cambiare</p>
+                        </div>
+                      ) : (
+                        <div>
+                          <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                          <p className="text-white mb-2">Carica la cover della serie</p>
+                          <p className="text-sm text-gray-400">PNG, JPG fino a 5MB</p>
+                        </div>
+                      )}
+                    </label>
                   </div>
-                  <input 
-                    type="file"
-                    id="coverFile"
-                    accept="image/*"
-                    onChange={handleCoverFileChange}
-                    className="hidden"
-                  />
                 </div>
-
-                {coverPreview && (
-                  <div className="mt-2">
-                    <Label className="text-white">Anteprima immagine</Label>
-                    <div className="mt-2">
-                      <img 
-                        src={coverPreview} 
-                        alt="Preview" 
-                        className="max-h-40 rounded border border-gray-700" 
-                      />
-                    </div>
-                  </div>
-                )}
               </form>
             </CardContent>
             <CardFooter>
               <Button 
                 onClick={handleSubmitSeries} 
-                className="w-full bg-wurth-red hover:bg-wurth-red/90"
+                className="w-full bg-wurth-red hover:bg-red-600 text-white font-semibold py-3"
                 disabled={seriesLoading}
               >
-                {seriesLoading ? 'Creazione in corso...' : 'Crea Serie'}
+                {seriesLoading ? '🚀 Creazione in corso...' : '✨ Crea Serie'}
               </Button>
             </CardFooter>
           </Card>
@@ -455,19 +462,24 @@ const Admin = () => {
           {/* Add New Episode */}
           <Card className="bg-wurth-gray text-white border-gray-700">
             <CardHeader>
-              <CardTitle>Aggiungi Episodio</CardTitle>
-              <CardDescription className="text-gray-400">Aggiungi un nuovo episodio a una serie esistente</CardDescription>
+              <CardTitle className="flex items-center">
+                <Mic className="mr-2 text-wurth-red" />
+                Nuovo Episodio
+              </CardTitle>
+              <CardDescription className="text-gray-400">
+                Pubblica un nuovo episodio in una serie esistente
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmitEpisode} className="space-y-4">
+              <form onSubmit={handleSubmitEpisode} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="seriesId" className="text-white">Seleziona Serie</Label>
+                  <Label htmlFor="seriesId" className="text-white font-medium">Serie di destinazione</Label>
                   <select 
                     id="seriesId"
                     name="seriesId"
                     value={episodeData.seriesId}
                     onChange={handleEpisodeInputChange}
-                    className="w-full rounded-md border border-gray-700 bg-gray-800 text-white p-2"
+                    className="w-full rounded-md border border-gray-600 bg-gray-800 text-white p-3 focus:border-wurth-red focus:outline-none"
                     required
                   >
                     <option value="">Seleziona una serie</option>
@@ -478,130 +490,128 @@ const Admin = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="episodeTitle" className="text-white">Titolo dell'Episodio</Label>
+                  <Label htmlFor="episodeTitle" className="text-white font-medium">Titolo dell'Episodio</Label>
                   <Input 
                     id="episodeTitle" 
                     name="title"
                     value={episodeData.title}
                     onChange={handleEpisodeInputChange}
-                    placeholder="Inserisci il titolo dell'episodio"
+                    placeholder="es. Come l'AI sta trasformando il settore..."
                     required
-                    className="bg-gray-800 border-gray-700 text-white"
+                    className="bg-gray-800 border-gray-600 text-white placeholder:text-gray-400 focus:border-wurth-red"
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="episodeDescription" className="text-white">Descrizione dell'Episodio</Label>
+                  <Label htmlFor="episodeDescription" className="text-white font-medium">Descrizione dell'Episodio</Label>
                   <Textarea 
                     id="episodeDescription" 
                     name="description"
                     value={episodeData.description}
                     onChange={handleEpisodeInputChange}
-                    placeholder="Descrivi l'episodio"
+                    placeholder="Descrivi il contenuto di questo episodio..."
                     required
-                    className="bg-gray-800 border-gray-700 text-white min-h-[120px]"
+                    className="bg-gray-800 border-gray-600 text-white placeholder:text-gray-400 min-h-[100px] focus:border-wurth-red"
                   />
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="episodeAudio" className="text-white">File Audio</Label>
-                  <div className="flex items-center space-x-2">
-                    <Button 
-                      type="button" 
-                      variant="outline"
-                      onClick={() => document.getElementById('episodeAudio')?.click()}
-                      className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700"
-                    >
-                      <FileAudio className="mr-2 h-4 w-4" /> Seleziona file audio
-                    </Button>
-                    <span className="text-sm text-gray-400">
-                      {episodeAudioFile ? episodeAudioFile.name : 'Nessun file selezionato'}
-                    </span>
-                    {episodeAudioFile && <CheckCircle className="h-4 w-4 text-green-400" />}
+                <div className="space-y-4">
+                  <Label className="text-white font-medium">File Audio *</Label>
+                  <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-wurth-red transition-colors">
+                    <input 
+                      type="file"
+                      id="episodeAudio"
+                      accept="audio/*"
+                      onChange={handleEpisodeAudioChange}
+                      className="hidden"
+                    />
+                    <label htmlFor="episodeAudio" className="cursor-pointer">
+                      {episodeAudioFile ? (
+                        <div>
+                          <FileAudio className="h-12 w-12 text-wurth-red mx-auto mb-4" />
+                          <p className="text-white mb-2">{episodeAudioFile.name}</p>
+                          {audioDuration > 0 && (
+                            <p className="text-sm text-green-400">
+                              Durata: {Math.floor(audioDuration / 60)}:{(audioDuration % 60).toString().padStart(2, '0')}
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <div>
+                          <FileAudio className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                          <p className="text-white mb-2">Carica il file audio</p>
+                          <p className="text-sm text-gray-400">MP3, WAV, M4A fino a 100MB</p>
+                        </div>
+                      )}
+                    </label>
                   </div>
-                  <input 
-                    type="file"
-                    id="episodeAudio"
-                    accept="audio/*"
-                    onChange={handleEpisodeAudioChange}
-                    className="hidden"
-                  />
-                  {audioDuration > 0 && (
-                    <p className="text-sm text-green-400">
-                      Durata: {Math.floor(audioDuration / 60)}:{(audioDuration % 60).toString().padStart(2, '0')}
-                    </p>
-                  )}
-                </div>
-                
-                {previewUrl && (
-                  <div className="mt-4 p-4 border border-gray-700 rounded-md">
-                    <Label className="text-white mb-2 block">Anteprima Audio</Label>
-                    <div className="flex items-center space-x-3">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700 rounded-full p-2 h-10 w-10"
-                        onClick={togglePlayPreview}
-                      >
-                        {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                      </Button>
-                      <div className="flex-1">
-                        <audio 
-                          ref={audioRef} 
-                          src={previewUrl} 
-                          onEnded={() => setIsPlaying(false)}
-                          onPlay={() => setIsPlaying(true)}
-                          onPause={() => setIsPlaying(false)}
-                          className="w-full" 
-                          controls 
-                        />
+                  
+                  {previewUrl && (
+                    <div className="bg-gray-800 p-4 rounded-lg">
+                      <Label className="text-white mb-3 block">🎧 Anteprima Audio</Label>
+                      <div className="flex items-center space-x-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="bg-wurth-red border-wurth-red text-white hover:bg-red-600 rounded-full p-3 h-12 w-12"
+                          onClick={togglePlayPreview}
+                        >
+                          {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                        </Button>
+                        <div className="flex-1">
+                          <audio 
+                            ref={audioRef} 
+                            src={previewUrl} 
+                            onEnded={() => setIsPlaying(false)}
+                            onPlay={() => setIsPlaying(true)}
+                            onPause={() => setIsPlaying(false)}
+                            className="w-full" 
+                            controls 
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-                
-                <div className="space-y-2">
-                  <Label htmlFor="episodeCover" className="text-white">Immagine dell'Episodio (opzionale)</Label>
-                  <div className="flex items-center space-x-2">
-                    <Button 
-                      type="button" 
-                      variant="outline"
-                      onClick={() => document.getElementById('episodeCover')?.click()}
-                      className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700"
-                    >
-                      <Upload className="mr-2 h-4 w-4" /> Seleziona immagine
-                    </Button>
-                    <span className="text-sm text-gray-400">
-                      {episodeCoverFile ? episodeCoverFile.name : 'Nessun file selezionato'}
-                    </span>
-                    {episodeCoverFile && <CheckCircle className="h-4 w-4 text-green-400" />}
-                  </div>
-                  <input 
-                    type="file"
-                    id="episodeCover"
-                    accept="image/*"
-                    onChange={handleEpisodeCoverChange}
-                    className="hidden"
-                  />
-                  {episodeCoverPreview && (
-                    <div className="mt-2">
-                      <img 
-                        src={episodeCoverPreview} 
-                        alt="Episode Cover Preview" 
-                        className="max-h-40 rounded border border-gray-700" 
-                      />
-                    </div>
                   )}
+                </div>
+                
+                <div className="space-y-4">
+                  <Label className="text-white font-medium">Cover Episodio (opzionale)</Label>
+                  <div className="border-2 border-dashed border-gray-600 rounded-lg p-4 text-center hover:border-wurth-red transition-colors">
+                    <input 
+                      type="file"
+                      id="episodeCover"
+                      accept="image/*"
+                      onChange={handleEpisodeCoverChange}
+                      className="hidden"
+                    />
+                    <label htmlFor="episodeCover" className="cursor-pointer">
+                      {episodeCoverPreview ? (
+                        <div>
+                          <img 
+                            src={episodeCoverPreview} 
+                            alt="Episode Cover Preview" 
+                            className="max-h-32 mx-auto rounded mb-2" 
+                          />
+                          <p className="text-sm text-gray-400">Clicca per cambiare</p>
+                        </div>
+                      ) : (
+                        <div>
+                          <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                          <p className="text-sm text-gray-400">Cover personalizzata per questo episodio</p>
+                        </div>
+                      )}
+                    </label>
+                  </div>
                 </div>
               </form>
             </CardContent>
             <CardFooter>
               <Button 
                 onClick={handleSubmitEpisode} 
-                className="w-full bg-wurth-red hover:bg-wurth-red/90"
+                className="w-full bg-wurth-red hover:bg-red-600 text-white font-semibold py-3"
                 disabled={episodeLoading}
               >
-                {episodeLoading ? 'Caricamento in corso...' : 'Aggiungi Episodio'}
+                {episodeLoading ? '🚀 Pubblicazione in corso...' : '📡 Pubblica Episodio'}
               </Button>
             </CardFooter>
           </Card>
