@@ -1,7 +1,6 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { v4 as uuidv4 } from 'uuid';
 import MainLayout from '../layouts/MainLayout';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,71 +14,109 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Upload, FileAudio, Folder, Play, Pause } from 'lucide-react';
+import { Upload, FileAudio, Play, Pause } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { createSeries, createEpisode, fetchCategories, fetchSeriesByCategory } from '../lib/podcastUtils';
+import { slugify } from '../lib/utils';
+import { Category, Series } from '../types/podcast';
+import { useAuth } from '../lib/AuthContext';
 
 const Admin = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [selectedCategory, setSelectedCategory] = useState("Digitale");
+  const { user, isAdmin, isEditor } = useAuth();
+  
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [seriesList, setSeriesList] = useState<Series[]>([]);
+  
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    author: "",
-    image: null as File | null,
-    audio: null as File | null,
+    slug: "",
   });
-  const [loading, setLoading] = useState(false);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  
+  const [seriesLoading, setSeriesLoading] = useState(false);
+  const [episodeLoading, setEpisodeLoading] = useState(false);
+  
   const [episodeData, setEpisodeData] = useState({
-    episodeTitle: "",
-    episodeDescription: "",
-    episodeAudio: null as File | null,
+    seriesId: "",
+    title: "",
+    description: "",
   });
+  const [episodeAudioFile, setEpisodeAudioFile] = useState<File | null>(null);
+  const [episodeCoverFile, setEpisodeCoverFile] = useState<File | null>(null);
   
   // Preview functionality
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    // Load categories and series
+    async function loadInitialData() {
+      const categoriesData = await fetchCategories();
+      setCategories(categoriesData);
+      
+      if (categoriesData.length > 0) {
+        setSelectedCategory(categoriesData[0].id);
+      }
+      
+      const seriesData = await fetchSeriesByCategory();
+      setSeriesList(seriesData);
+    }
+    
+    loadInitialData();
+  }, []);
   
-  const categories = [
-    "Digitale",
-    "Costruzioni",
-    "Automotive",
-    "Industria",
-    "Sicurezza",
-    "Tecnica", 
-    "Formazione"
-  ];
+  // Redirect if not logged in or not an admin/editor
+  useEffect(() => {
+    if (user && !isAdmin && !isEditor) {
+      toast({
+        title: "Accesso negato",
+        description: "Non hai i permessi necessari per accedere a questa pagina.",
+        variant: "destructive"
+      });
+      navigate('/');
+    }
+  }, [user, isAdmin, isEditor, navigate, toast]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fileType: 'image' | 'audio') => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setFormData(prev => ({ ...prev, [fileType]: file }));
+    setFormData(prev => {
+      const newData = { ...prev, [name]: value };
       
-      if (fileType === 'audio') {
-        // Create URL for audio preview
-        if (previewUrl) URL.revokeObjectURL(previewUrl);
-        const newPreviewUrl = URL.createObjectURL(file);
-        setPreviewUrl(newPreviewUrl);
+      // Auto-generate slug when title changes
+      if (name === 'title') {
+        newData.slug = slugify(value);
       }
       
-      // Show a toast notification for file selection
+      return newData;
+    });
+  };
+
+  const handleCoverFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setCoverFile(file);
+      
       toast({
-        title: "File selezionato",
+        title: "Immagine selezionata",
         description: `Hai selezionato: ${file.name}`,
       });
     }
   };
 
-  const handleEpisodeFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEpisodeInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setEpisodeData(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleEpisodeAudioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setEpisodeData(prev => ({ ...prev, episodeAudio: file }));
+      setEpisodeAudioFile(file);
       
       // Create URL for audio preview
       if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -87,15 +124,22 @@ const Admin = () => {
       setPreviewUrl(newPreviewUrl);
       
       toast({
-        title: "Audio episodio selezionato",
+        title: "Audio selezionato",
         description: `Hai selezionato: ${file.name}`,
       });
     }
   };
-
-  const handleEpisodeInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setEpisodeData(prev => ({ ...prev, [name]: value }));
+  
+  const handleEpisodeCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setEpisodeCoverFile(file);
+      
+      toast({
+        title: "Immagine episodio selezionata",
+        description: `Hai selezionato: ${file.name}`,
+      });
+    }
   };
 
   const togglePlayPreview = () => {
@@ -115,54 +159,134 @@ const Admin = () => {
     setIsPlaying(!isPlaying);
   };
 
-  const handleSubmitPodcast = (e: React.FormEvent) => {
+  const handleSubmitSeries = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     
-    // Generate a unique ID for the podcast
-    const podcastId = uuidv4();
-    
-    // This is a mock implementation that would connect to a backend
-    // In a real application, we would upload files to a storage service and save metadata to a database
-    setTimeout(() => {
+    if (!selectedCategory) {
       toast({
-        title: "Podcast creato con successo",
-        description: "Il nuovo podcast è stato aggiunto alla piattaforma",
+        title: "Categoria obbligatoria",
+        description: "Seleziona una categoria per la serie",
+        variant: "destructive"
       });
-      setLoading(false);
-      setFormData({
-        title: "",
-        description: "",
-        author: "",
-        image: null,
-        audio: null,
+      return;
+    }
+    
+    try {
+      setSeriesLoading(true);
+      
+      const seriesData = {
+        category_id: selectedCategory,
+        title: formData.title,
+        description: formData.description,
+        slug: formData.slug,
+      };
+      
+      const newSeries = await createSeries(seriesData, coverFile || undefined);
+      
+      if (newSeries) {
+        toast({
+          title: "Serie creata con successo",
+          description: "La nuova serie podcast è stata aggiunta",
+        });
+        
+        // Reset form
+        setFormData({
+          title: "",
+          description: "",
+          slug: "",
+        });
+        setCoverFile(null);
+        
+        // Refresh series list
+        const updatedSeries = await fetchSeriesByCategory();
+        setSeriesList(updatedSeries);
+      } else {
+        toast({
+          title: "Errore",
+          description: "Impossibile creare la serie podcast",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Error creating series:", error);
+      toast({
+        title: "Errore",
+        description: "Si è verificato un errore durante la creazione della serie",
+        variant: "destructive"
       });
-      setPreviewUrl(null);
-      navigate("/digital");
-    }, 1500);
+    } finally {
+      setSeriesLoading(false);
+    }
   };
 
-  const handleSubmitEpisode = (e: React.FormEvent) => {
+  const handleSubmitEpisode = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     
-    // Generate a unique ID for the episode
-    const episodeId = uuidv4();
-    
-    // Mock implementation for episode upload
-    setTimeout(() => {
+    if (!episodeData.seriesId) {
       toast({
-        title: "Episodio aggiunto con successo",
-        description: "Il nuovo episodio è stato aggiunto al podcast",
+        title: "Serie obbligatoria",
+        description: "Seleziona una serie per l'episodio",
+        variant: "destructive"
       });
-      setLoading(false);
-      setEpisodeData({
-        episodeTitle: "",
-        episodeDescription: "",
-        episodeAudio: null,
+      return;
+    }
+    
+    if (!episodeAudioFile) {
+      toast({
+        title: "Audio obbligatorio",
+        description: "Carica un file audio per l'episodio",
+        variant: "destructive"
       });
-      setPreviewUrl(null);
-    }, 1500);
+      return;
+    }
+    
+    try {
+      setEpisodeLoading(true);
+      
+      const newEpisodeData = {
+        series_id: episodeData.seriesId,
+        title: episodeData.title,
+        description: episodeData.description,
+      };
+      
+      const newEpisode = await createEpisode(
+        newEpisodeData, 
+        episodeAudioFile, 
+        episodeCoverFile || undefined
+      );
+      
+      if (newEpisode) {
+        toast({
+          title: "Episodio creato con successo",
+          description: "Il nuovo episodio è stato aggiunto alla serie",
+        });
+        
+        // Reset form
+        setEpisodeData({
+          seriesId: "",
+          title: "",
+          description: "",
+        });
+        setEpisodeAudioFile(null);
+        setEpisodeCoverFile(null);
+        setPreviewUrl(null);
+      } else {
+        toast({
+          title: "Errore",
+          description: "Impossibile creare l'episodio",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Error creating episode:", error);
+      toast({
+        title: "Errore",
+        description: "Si è verificato un errore durante la creazione dell'episodio",
+        variant: "destructive"
+      });
+    } finally {
+      setEpisodeLoading(false);
+    }
   };
 
   // Clean up object URLs when component unmounts
@@ -172,28 +296,42 @@ const Admin = () => {
     };
   }, []);
 
+  // If not an admin or editor, show access denied
+  if (!isAdmin && !isEditor) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-white mb-4">Accesso negato</h1>
+            <p className="text-gray-400">Non hai i permessi necessari per accedere a questa pagina.</p>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
   return (
     <MainLayout>
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white mb-6">Amministrazione Podcast</h1>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Create New Podcast */}
+          {/* Create New Series */}
           <Card className="bg-wurth-gray text-white border-gray-700">
             <CardHeader>
-              <CardTitle>Crea Nuovo Podcast</CardTitle>
+              <CardTitle>Crea Nuova Serie Podcast</CardTitle>
               <CardDescription className="text-gray-400">Aggiungi una nuova serie podcast alla piattaforma</CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmitPodcast} className="space-y-4">
+              <form onSubmit={handleSubmitSeries} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="title" className="text-white">Titolo del Podcast</Label>
+                  <Label htmlFor="title" className="text-white">Titolo della Serie</Label>
                   <Input 
                     id="title" 
                     name="title"
                     value={formData.title}
                     onChange={handleInputChange}
-                    placeholder="Inserisci il titolo del podcast"
+                    placeholder="Inserisci il titolo della serie podcast"
                     required
                     className="bg-gray-800 border-gray-700 text-white"
                   />
@@ -206,20 +344,20 @@ const Admin = () => {
                     name="description"
                     value={formData.description}
                     onChange={handleInputChange}
-                    placeholder="Descrivi il podcast"
+                    placeholder="Descrivi la serie podcast"
                     required
                     className="bg-gray-800 border-gray-700 text-white min-h-[120px]"
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="author" className="text-white">Autore</Label>
+                  <Label htmlFor="slug" className="text-white">Slug (URL)</Label>
                   <Input 
-                    id="author" 
-                    name="author"
-                    value={formData.author}
+                    id="slug" 
+                    name="slug"
+                    value={formData.slug}
                     onChange={handleInputChange}
-                    placeholder="Nome dell'autore"
+                    placeholder="url-friendly-slug"
                     required
                     className="bg-gray-800 border-gray-700 text-white"
                   />
@@ -229,48 +367,50 @@ const Admin = () => {
                   <Label htmlFor="category" className="text-white">Categoria</Label>
                   <select 
                     id="category"
+                    name="category"
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
                     className="w-full rounded-md border border-gray-700 bg-gray-800 text-white p-2"
                     required
                   >
+                    <option value="">Seleziona una categoria</option>
                     {categories.map((cat) => (
-                      <option key={cat} value={cat}>{cat}</option>
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
                     ))}
                   </select>
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="image" className="text-white">Immagine di copertina</Label>
+                  <Label htmlFor="cover" className="text-white">Immagine di copertina</Label>
                   <div className="flex items-center space-x-2">
                     <Button 
                       type="button" 
                       variant="outline"
-                      onClick={() => document.getElementById('image')?.click()}
+                      onClick={() => document.getElementById('coverFile')?.click()}
                       className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700"
                     >
                       <Upload className="mr-2 h-4 w-4" /> Seleziona immagine
                     </Button>
                     <span className="text-sm text-gray-400">
-                      {formData.image ? formData.image.name : 'Nessun file selezionato'}
+                      {coverFile ? coverFile.name : 'Nessun file selezionato'}
                     </span>
                   </div>
                   <input 
                     type="file"
-                    id="image"
+                    id="coverFile"
                     accept="image/*"
-                    onChange={(e) => handleFileChange(e, 'image')}
+                    onChange={handleCoverFileChange}
                     className="hidden"
                   />
                 </div>
 
                 {/* Preview section for image */}
-                {formData.image && (
+                {coverFile && (
                   <div className="mt-2">
                     <Label className="text-white">Anteprima immagine</Label>
                     <div className="mt-2">
                       <img 
-                        src={URL.createObjectURL(formData.image)} 
+                        src={URL.createObjectURL(coverFile)} 
                         alt="Preview" 
                         className="max-h-40 rounded border border-gray-700" 
                       />
@@ -281,11 +421,11 @@ const Admin = () => {
             </CardContent>
             <CardFooter>
               <Button 
-                onClick={handleSubmitPodcast} 
+                onClick={handleSubmitSeries} 
                 className="w-full bg-wurth-red hover:bg-wurth-red/90"
-                disabled={loading}
+                disabled={seriesLoading}
               >
-                {loading ? 'Creazione in corso...' : 'Crea Podcast'}
+                {seriesLoading ? 'Creazione in corso...' : 'Crea Serie'}
               </Button>
             </CardFooter>
           </Card>
@@ -294,23 +434,24 @@ const Admin = () => {
           <Card className="bg-wurth-gray text-white border-gray-700">
             <CardHeader>
               <CardTitle>Aggiungi Episodio</CardTitle>
-              <CardDescription className="text-gray-400">Aggiungi un nuovo episodio a un podcast esistente</CardDescription>
+              <CardDescription className="text-gray-400">Aggiungi un nuovo episodio a una serie esistente</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmitEpisode} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="podcastSelect" className="text-white">Seleziona Podcast</Label>
+                  <Label htmlFor="seriesId" className="text-white">Seleziona Serie</Label>
                   <select 
-                    id="podcastSelect"
+                    id="seriesId"
+                    name="seriesId"
+                    value={episodeData.seriesId}
+                    onChange={handleEpisodeInputChange}
                     className="w-full rounded-md border border-gray-700 bg-gray-800 text-white p-2"
                     required
                   >
-                    <option value="1">Innovazioni nel settore delle costruzioni</option>
-                    <option value="2">Automotive Solutions</option>
-                    <option value="3">Industria 4.0</option>
-                    <option value="d1">Innovazione Digitale Würth</option>
-                    <option value="d2">App e Servizi Würth</option>
-                    <option value="d3">E-Commerce e Soluzioni Online</option>
+                    <option value="">Seleziona una serie</option>
+                    {seriesList.map((series) => (
+                      <option key={series.id} value={series.id}>{series.title}</option>
+                    ))}
                   </select>
                 </div>
                 
@@ -318,8 +459,8 @@ const Admin = () => {
                   <Label htmlFor="episodeTitle" className="text-white">Titolo dell'Episodio</Label>
                   <Input 
                     id="episodeTitle" 
-                    name="episodeTitle"
-                    value={episodeData.episodeTitle}
+                    name="title"
+                    value={episodeData.title}
                     onChange={handleEpisodeInputChange}
                     placeholder="Inserisci il titolo dell'episodio"
                     required
@@ -331,8 +472,8 @@ const Admin = () => {
                   <Label htmlFor="episodeDescription" className="text-white">Descrizione dell'Episodio</Label>
                   <Textarea 
                     id="episodeDescription" 
-                    name="episodeDescription"
-                    value={episodeData.episodeDescription}
+                    name="description"
+                    value={episodeData.description}
                     onChange={handleEpisodeInputChange}
                     placeholder="Descrivi l'episodio"
                     required
@@ -352,14 +493,14 @@ const Admin = () => {
                       <FileAudio className="mr-2 h-4 w-4" /> Seleziona file audio
                     </Button>
                     <span className="text-sm text-gray-400">
-                      {episodeData.episodeAudio ? episodeData.episodeAudio.name : 'Nessun file selezionato'}
+                      {episodeAudioFile ? episodeAudioFile.name : 'Nessun file selezionato'}
                     </span>
                   </div>
                   <input 
                     type="file"
                     id="episodeAudio"
                     accept="audio/*"
-                    onChange={handleEpisodeFileChange}
+                    onChange={handleEpisodeAudioChange}
                     className="hidden"
                   />
                 </div>
@@ -393,12 +534,26 @@ const Admin = () => {
                 )}
                 
                 <div className="space-y-2">
-                  <Label htmlFor="episodeDate" className="text-white">Data di pubblicazione</Label>
-                  <Input 
-                    id="episodeDate" 
-                    type="date"
-                    className="bg-gray-800 border-gray-700 text-white"
-                    required
+                  <Label htmlFor="episodeCover" className="text-white">Immagine dell'Episodio (opzionale)</Label>
+                  <div className="flex items-center space-x-2">
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={() => document.getElementById('episodeCover')?.click()}
+                      className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700"
+                    >
+                      <Upload className="mr-2 h-4 w-4" /> Seleziona immagine
+                    </Button>
+                    <span className="text-sm text-gray-400">
+                      {episodeCoverFile ? episodeCoverFile.name : 'Nessun file selezionato'}
+                    </span>
+                  </div>
+                  <input 
+                    type="file"
+                    id="episodeCover"
+                    accept="image/*"
+                    onChange={handleEpisodeCoverChange}
+                    className="hidden"
                   />
                 </div>
               </form>
@@ -407,131 +562,11 @@ const Admin = () => {
               <Button 
                 onClick={handleSubmitEpisode} 
                 className="w-full bg-wurth-red hover:bg-wurth-red/90"
-                disabled={loading}
+                disabled={episodeLoading}
               >
-                {loading ? 'Caricamento in corso...' : 'Aggiungi Episodio'}
+                {episodeLoading ? 'Caricamento in corso...' : 'Aggiungi Episodio'}
               </Button>
             </CardFooter>
-          </Card>
-        </div>
-        
-        <div className="mt-8">
-          <Card className="bg-wurth-gray text-white border-gray-700">
-            <CardHeader>
-              <CardTitle>Gestione File</CardTitle>
-              <CardDescription className="text-gray-400">Gestisci i file dei podcast caricati</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 gap-4">
-                <div className="bg-gray-800 p-4 rounded-md flex items-center justify-between">
-                  <div className="flex items-center">
-                    <FileAudio className="h-8 w-8 mr-3 text-wurth-red" />
-                    <div>
-                      <h3 className="font-medium">Episodio_1_Digitale.mp3</h3>
-                      <p className="text-sm text-gray-400">12.4 MB • Caricato il 18/05/2025</p>
-                    </div>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button 
-                      variant="outline" 
-                      className="border-gray-700 text-white hover:bg-gray-700"
-                      onClick={() => {
-                        toast({
-                          title: "Anteprima",
-                          description: "Riproduzione audio avviata",
-                        });
-                      }}
-                    >
-                      <Play className="h-4 w-4 mr-2" /> Anteprima
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="border-gray-700 text-white hover:bg-gray-700"
-                      onClick={() => {
-                        toast({
-                          title: "Download avviato",
-                          description: "Il file verrà scaricato a breve",
-                        });
-                      }}
-                    >
-                      Scarica
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="bg-gray-800 p-4 rounded-md flex items-center justify-between">
-                  <div className="flex items-center">
-                    <FileAudio className="h-8 w-8 mr-3 text-wurth-red" />
-                    <div>
-                      <h3 className="font-medium">Episodio_2_Digitale.mp3</h3>
-                      <p className="text-sm text-gray-400">9.8 MB • Caricato il 20/05/2025</p>
-                    </div>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button 
-                      variant="outline" 
-                      className="border-gray-700 text-white hover:bg-gray-700"
-                      onClick={() => {
-                        toast({
-                          title: "Anteprima",
-                          description: "Riproduzione audio avviata",
-                        });
-                      }}
-                    >
-                      <Play className="h-4 w-4 mr-2" /> Anteprima
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="border-gray-700 text-white hover:bg-gray-700"
-                      onClick={() => {
-                        toast({
-                          title: "Download avviato",
-                          description: "Il file verrà scaricato a breve",
-                        });
-                      }}
-                    >
-                      Scarica
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="bg-gray-800 p-4 rounded-md flex items-center justify-between">
-                  <div className="flex items-center">
-                    <FileAudio className="h-8 w-8 mr-3 text-wurth-red" />
-                    <div>
-                      <h3 className="font-medium">Innovazione_Episodio_1.mp3</h3>
-                      <p className="text-sm text-gray-400">15.2 MB • Caricato il 15/05/2025</p>
-                    </div>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button 
-                      variant="outline" 
-                      className="border-gray-700 text-white hover:bg-gray-700"
-                      onClick={() => {
-                        toast({
-                          title: "Anteprima",
-                          description: "Riproduzione audio avviata",
-                        });
-                      }}
-                    >
-                      <Play className="h-4 w-4 mr-2" /> Anteprima
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="border-gray-700 text-white hover:bg-gray-700"
-                      onClick={() => {
-                        toast({
-                          title: "Download avviato",
-                          description: "Il file verrà scaricato a breve",
-                        });
-                      }}
-                    >
-                      Scarica
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
           </Card>
         </div>
       </div>
