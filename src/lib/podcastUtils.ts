@@ -95,64 +95,103 @@ export async function fetchEpisodeById(episodeId: string): Promise<Episode | nul
 
 // Upload a file to Supabase Storage
 export async function uploadFile(file: File, folder: 'covers' | 'audio'): Promise<string | null> {
-  const fileExt = file.name.split('.').pop();
-  const fileName = `${uuidv4()}.${fileExt}`;
-  const filePath = `${folder}/${fileName}`;
+  try {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${uuidv4()}.${fileExt}`;
+    const filePath = `${folder}/${fileName}`;
 
-  const { error } = await supabase.storage
-    .from('podcasts')
-    .upload(filePath, file);
+    console.log('Uploading file:', filePath);
 
-  if (error) {
-    console.error('Error uploading file:', error);
+    const { data, error } = await supabase.storage
+      .from('podcasts')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) {
+      console.error('Error uploading file:', error);
+      return null;
+    }
+
+    console.log('File uploaded successfully:', data);
+
+    const { data: urlData } = supabase.storage
+      .from('podcasts')
+      .getPublicUrl(filePath);
+
+    console.log('Public URL:', urlData.publicUrl);
+    
+    return urlData.publicUrl;
+  } catch (error) {
+    console.error('Upload error:', error);
     return null;
   }
-
-  const { data } = supabase.storage
-    .from('podcasts')
-    .getPublicUrl(filePath);
-
-  return data.publicUrl;
 }
 
 // Create a signed URL for authenticated access to audio files
 export async function getSignedAudioUrl(audioPath: string): Promise<string | null> {
-  const { data, error } = await supabase.storage
-    .from('podcasts')
-    .createSignedUrl(audioPath, 60 * 60 * 24); // 24 hours expiry
+  try {
+    // Extract the path from the full URL if it's a full URL
+    let path = audioPath;
+    if (audioPath.includes('/storage/v1/object/public/podcasts/')) {
+      path = audioPath.split('/storage/v1/object/public/podcasts/')[1];
+    }
 
-  if (error) {
-    console.error('Error creating signed URL:', error);
-    return null;
+    const { data, error } = await supabase.storage
+      .from('podcasts')
+      .createSignedUrl(path, 60 * 60 * 24); // 24 hours expiry
+
+    if (error) {
+      console.error('Error creating signed URL:', error);
+      // If signed URL fails, return the original public URL
+      return audioPath;
+    }
+
+    return data.signedUrl;
+  } catch (error) {
+    console.error('Signed URL error:', error);
+    return audioPath;
   }
-
-  return data.signedUrl;
 }
 
 // Create a new series
 export async function createSeries(seriesData: Partial<Series> & { title: string, slug: string }, coverFile?: File): Promise<Series | null> {
-  let coverUrl = null;
-  
-  if (coverFile) {
-    coverUrl = await uploadFile(coverFile, 'covers');
-  }
-  
-  const { data, error } = await supabase
-    .from('series')
-    .insert({
-      ...seriesData,
-      cover_url: coverUrl,
-      created_by: (await supabase.auth.getUser()).data.user?.id
-    })
-    .select()
-    .single();
-  
-  if (error) {
-    console.error('Error creating series:', error);
+  try {
+    let coverUrl = null;
+    
+    if (coverFile) {
+      console.log('Uploading cover file for series...');
+      coverUrl = await uploadFile(coverFile, 'covers');
+      if (!coverUrl) {
+        console.error('Failed to upload cover file');
+        return null;
+      }
+    }
+    
+    const userResponse = await supabase.auth.getUser();
+    
+    const { data, error } = await supabase
+      .from('series')
+      .insert({
+        ...seriesData,
+        cover_url: coverUrl,
+        created_by: userResponse.data.user?.id
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error creating series:', error);
+      return null;
+    }
+    
+    console.log('Series created successfully:', data);
+    return data;
+  } catch (error) {
+    console.error('Create series error:', error);
     return null;
   }
-  
-  return data;
 }
 
 // Create a new episode
@@ -161,34 +200,50 @@ export async function createEpisode(
   audioFile?: File, 
   coverFile?: File
 ): Promise<Episode | null> {
-  let audioUrl = null;
-  let coverUrl = null;
-  
-  if (audioFile) {
-    audioUrl = await uploadFile(audioFile, 'audio');
-  }
-  
-  if (coverFile) {
-    coverUrl = await uploadFile(coverFile, 'covers');
-  }
-  
-  const { data, error } = await supabase
-    .from('episodes')
-    .insert({
-      ...episodeData,
-      audio_url: audioUrl,
-      cover_url: coverUrl,
-      published_at: new Date().toISOString(),
-    })
-    .select()
-    .single();
-  
-  if (error) {
-    console.error('Error creating episode:', error);
+  try {
+    let audioUrl = null;
+    let coverUrl = null;
+    
+    if (audioFile) {
+      console.log('Uploading audio file...');
+      audioUrl = await uploadFile(audioFile, 'audio');
+      if (!audioUrl) {
+        console.error('Failed to upload audio file');
+        return null;
+      }
+      console.log('Audio file uploaded:', audioUrl);
+    }
+    
+    if (coverFile) {
+      console.log('Uploading cover file for episode...');
+      coverUrl = await uploadFile(coverFile, 'covers');
+      if (!coverUrl) {
+        console.error('Failed to upload cover file');
+      }
+    }
+    
+    const { data, error } = await supabase
+      .from('episodes')
+      .insert({
+        ...episodeData,
+        audio_url: audioUrl,
+        cover_url: coverUrl,
+        published_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error creating episode:', error);
+      return null;
+    }
+    
+    console.log('Episode created successfully:', data);
+    return data;
+  } catch (error) {
+    console.error('Create episode error:', error);
     return null;
   }
-  
-  return data;
 }
 
 // Get recent episodes
@@ -215,7 +270,10 @@ export async function searchContent(query: string): Promise<{ series: Series[], 
   // Search series
   const { data: seriesData, error: seriesError } = await supabase
     .from('series')
-    .select('*')
+    .select(`
+      *,
+      categories(id, name, slug)
+    `)
     .ilike('title', `%${query}%`)
     .limit(5);
     
@@ -236,4 +294,18 @@ export async function searchContent(query: string): Promise<{ series: Series[], 
     series: seriesData || [],
     episodes: episodesData || [],
   };
+}
+
+// Get audio duration from file
+export async function getAudioDuration(file: File): Promise<number> {
+  return new Promise((resolve) => {
+    const audio = new Audio();
+    audio.onloadedmetadata = () => {
+      resolve(Math.floor(audio.duration));
+    };
+    audio.onerror = () => {
+      resolve(0);
+    };
+    audio.src = URL.createObjectURL(file);
+  });
 }

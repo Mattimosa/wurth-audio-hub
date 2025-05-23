@@ -14,9 +14,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Upload, FileAudio, Play, Pause } from 'lucide-react';
+import { Upload, FileAudio, Play, Pause, CheckCircle, AlertCircle } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
-import { createSeries, createEpisode, fetchCategories, fetchSeriesByCategory } from '../lib/podcastUtils';
+import { createSeries, createEpisode, fetchCategories, fetchSeriesByCategory, getAudioDuration } from '../lib/podcastUtils';
 import { slugify } from '../lib/utils';
 import { Category, Series } from '../types/podcast';
 import { useAuth } from '../lib/AuthContext';
@@ -36,6 +36,7 @@ const Admin = () => {
     slug: "",
   });
   const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
   
   const [seriesLoading, setSeriesLoading] = useState(false);
   const [episodeLoading, setEpisodeLoading] = useState(false);
@@ -47,14 +48,15 @@ const Admin = () => {
   });
   const [episodeAudioFile, setEpisodeAudioFile] = useState<File | null>(null);
   const [episodeCoverFile, setEpisodeCoverFile] = useState<File | null>(null);
+  const [episodeCoverPreview, setEpisodeCoverPreview] = useState<string | null>(null);
   
   // Preview functionality
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [audioDuration, setAudioDuration] = useState<number>(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    // Load categories and series
     async function loadInitialData() {
       const categoriesData = await fetchCategories();
       setCategories(categoriesData);
@@ -70,7 +72,6 @@ const Admin = () => {
     loadInitialData();
   }, []);
   
-  // Redirect if not logged in or not an admin/editor
   useEffect(() => {
     if (user && !isAdmin && !isEditor) {
       toast({
@@ -87,7 +88,6 @@ const Admin = () => {
     setFormData(prev => {
       const newData = { ...prev, [name]: value };
       
-      // Auto-generate slug when title changes
       if (name === 'title') {
         newData.slug = slugify(value);
       }
@@ -101,6 +101,9 @@ const Admin = () => {
       const file = e.target.files[0];
       setCoverFile(file);
       
+      const previewUrl = URL.createObjectURL(file);
+      setCoverPreview(previewUrl);
+      
       toast({
         title: "Immagine selezionata",
         description: `Hai selezionato: ${file.name}`,
@@ -113,19 +116,22 @@ const Admin = () => {
     setEpisodeData(prev => ({ ...prev, [name]: value }));
   };
   
-  const handleEpisodeAudioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEpisodeAudioChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setEpisodeAudioFile(file);
       
-      // Create URL for audio preview
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       const newPreviewUrl = URL.createObjectURL(file);
       setPreviewUrl(newPreviewUrl);
       
+      // Get audio duration
+      const duration = await getAudioDuration(file);
+      setAudioDuration(duration);
+      
       toast({
         title: "Audio selezionato",
-        description: `Hai selezionato: ${file.name}`,
+        description: `Hai selezionato: ${file.name} (${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')})`,
       });
     }
   };
@@ -134,6 +140,10 @@ const Admin = () => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setEpisodeCoverFile(file);
+      
+      if (episodeCoverPreview) URL.revokeObjectURL(episodeCoverPreview);
+      const previewUrl = URL.createObjectURL(file);
+      setEpisodeCoverPreview(previewUrl);
       
       toast({
         title: "Immagine episodio selezionata",
@@ -153,6 +163,7 @@ const Admin = () => {
         toast({
           title: "Errore riproduzione",
           description: "Impossibile riprodurre il file audio",
+          variant: "destructive"
         });
       });
     }
@@ -189,15 +200,17 @@ const Admin = () => {
           description: "La nuova serie podcast è stata aggiunta",
         });
         
-        // Reset form
         setFormData({
           title: "",
           description: "",
           slug: "",
         });
         setCoverFile(null);
+        if (coverPreview) {
+          URL.revokeObjectURL(coverPreview);
+          setCoverPreview(null);
+        }
         
-        // Refresh series list
         const updatedSeries = await fetchSeriesByCategory();
         setSeriesList(updatedSeries);
       } else {
@@ -247,6 +260,7 @@ const Admin = () => {
         series_id: episodeData.seriesId,
         title: episodeData.title,
         description: episodeData.description,
+        duration: audioDuration || null,
       };
       
       const newEpisode = await createEpisode(
@@ -261,7 +275,6 @@ const Admin = () => {
           description: "Il nuovo episodio è stato aggiunto alla serie",
         });
         
-        // Reset form
         setEpisodeData({
           seriesId: "",
           title: "",
@@ -269,7 +282,15 @@ const Admin = () => {
         });
         setEpisodeAudioFile(null);
         setEpisodeCoverFile(null);
-        setPreviewUrl(null);
+        setAudioDuration(0);
+        if (previewUrl) {
+          URL.revokeObjectURL(previewUrl);
+          setPreviewUrl(null);
+        }
+        if (episodeCoverPreview) {
+          URL.revokeObjectURL(episodeCoverPreview);
+          setEpisodeCoverPreview(null);
+        }
       } else {
         toast({
           title: "Errore",
@@ -289,19 +310,20 @@ const Admin = () => {
     }
   };
 
-  // Clean up object URLs when component unmounts
   React.useEffect(() => {
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
+      if (coverPreview) URL.revokeObjectURL(coverPreview);
+      if (episodeCoverPreview) URL.revokeObjectURL(episodeCoverPreview);
     };
   }, []);
 
-  // If not an admin or editor, show access denied
   if (!isAdmin && !isEditor) {
     return (
       <MainLayout>
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
+            <AlertCircle className="h-16 w-16 text-wurth-red mx-auto mb-4" />
             <h1 className="text-3xl font-bold text-white mb-4">Accesso negato</h1>
             <p className="text-gray-400">Non hai i permessi necessari per accedere a questa pagina.</p>
           </div>
@@ -394,6 +416,7 @@ const Admin = () => {
                     <span className="text-sm text-gray-400">
                       {coverFile ? coverFile.name : 'Nessun file selezionato'}
                     </span>
+                    {coverFile && <CheckCircle className="h-4 w-4 text-green-400" />}
                   </div>
                   <input 
                     type="file"
@@ -404,13 +427,12 @@ const Admin = () => {
                   />
                 </div>
 
-                {/* Preview section for image */}
-                {coverFile && (
+                {coverPreview && (
                   <div className="mt-2">
                     <Label className="text-white">Anteprima immagine</Label>
                     <div className="mt-2">
                       <img 
-                        src={URL.createObjectURL(coverFile)} 
+                        src={coverPreview} 
                         alt="Preview" 
                         className="max-h-40 rounded border border-gray-700" 
                       />
@@ -495,6 +517,7 @@ const Admin = () => {
                     <span className="text-sm text-gray-400">
                       {episodeAudioFile ? episodeAudioFile.name : 'Nessun file selezionato'}
                     </span>
+                    {episodeAudioFile && <CheckCircle className="h-4 w-4 text-green-400" />}
                   </div>
                   <input 
                     type="file"
@@ -503,9 +526,13 @@ const Admin = () => {
                     onChange={handleEpisodeAudioChange}
                     className="hidden"
                   />
+                  {audioDuration > 0 && (
+                    <p className="text-sm text-green-400">
+                      Durata: {Math.floor(audioDuration / 60)}:{(audioDuration % 60).toString().padStart(2, '0')}
+                    </p>
+                  )}
                 </div>
                 
-                {/* Audio Preview Player */}
                 {previewUrl && (
                   <div className="mt-4 p-4 border border-gray-700 rounded-md">
                     <Label className="text-white mb-2 block">Anteprima Audio</Label>
@@ -547,6 +574,7 @@ const Admin = () => {
                     <span className="text-sm text-gray-400">
                       {episodeCoverFile ? episodeCoverFile.name : 'Nessun file selezionato'}
                     </span>
+                    {episodeCoverFile && <CheckCircle className="h-4 w-4 text-green-400" />}
                   </div>
                   <input 
                     type="file"
@@ -555,6 +583,15 @@ const Admin = () => {
                     onChange={handleEpisodeCoverChange}
                     className="hidden"
                   />
+                  {episodeCoverPreview && (
+                    <div className="mt-2">
+                      <img 
+                        src={episodeCoverPreview} 
+                        alt="Episode Cover Preview" 
+                        className="max-h-40 rounded border border-gray-700" 
+                      />
+                    </div>
+                  )}
                 </div>
               </form>
             </CardContent>
