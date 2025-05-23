@@ -1,6 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 import MainLayout from '../layouts/MainLayout';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -118,6 +119,9 @@ const Admin = () => {
     e.preventDefault();
     setLoading(true);
     
+    // Generate a unique ID for the podcast
+    const podcastId = uuidv4();
+    
     // This is a mock implementation that would connect to a backend
     // In a real application, we would upload files to a storage service and save metadata to a database
     setTimeout(() => {
@@ -141,6 +145,9 @@ const Admin = () => {
   const handleSubmitEpisode = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    
+    // Generate a unique ID for the episode
+    const episodeId = uuidv4();
     
     // Mock implementation for episode upload
     setTimeout(() => {
