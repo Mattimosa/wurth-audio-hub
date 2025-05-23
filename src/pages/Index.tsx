@@ -8,6 +8,35 @@ import { fetchCategories, fetchSeriesByCategory, getRecentEpisodes } from '../li
 import { Category, Series, Episode } from '../types/podcast';
 import { SearchCommand } from '../components/SearchCommand';
 
+// Adapter function to convert Series to the format expected by PodcastCard
+const adaptSeriesToPodcastCard = (series: Series) => {
+  return {
+    id: series.id,
+    title: series.title,
+    description: series.description || '',
+    imageUrl: series.cover_url || '/placeholder.svg',
+    category: (series as any).categories?.name || 'Uncategorized',
+    episodes: [],
+    author: series.created_by || 'Unknown',
+    slug: series.slug
+  };
+};
+
+// Adapter function to convert Episode to the format expected by PodcastCard
+const adaptEpisodeToPodcastCard = (episode: Episode) => {
+  const seriesData = episode.series as any;
+  return {
+    id: episode.id,
+    title: episode.title,
+    description: episode.description || '',
+    imageUrl: episode.cover_url || seriesData?.cover_url || '/placeholder.svg',
+    category: 'Episode',
+    episodes: [],
+    author: 'Unknown',
+    slug: seriesData?.slug
+  };
+};
+
 const Index = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [categories, setCategories] = useState<Category[]>([]);
@@ -49,7 +78,9 @@ const Index = () => {
         <SearchCommand />
       </div>
       
-      {series.length > 0 && <FeaturedPodcast podcast={series[0]} />}
+      {series.length > 0 && (
+        <FeaturedPodcast podcast={adaptSeriesToPodcastCard(series[0])} />
+      )}
       
       <div className="mb-8">
         <div className="flex items-center justify-between mb-6">
@@ -98,7 +129,7 @@ const Index = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {series.map((podcast) => (
               <Link key={podcast.id} to={`/series/${podcast.slug}`}>
-                <PodcastCard podcast={podcast} />
+                <PodcastCard podcast={adaptSeriesToPodcastCard(podcast)} />
               </Link>
             ))}
           </div>
@@ -115,22 +146,21 @@ const Index = () => {
             <h2 className="text-2xl font-bold text-white">Episodi recenti</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {recentEpisodes.map((episode) => (
-              <Link 
-                key={episode.id} 
-                to={`/series/${episode.series?.slug}/${episode.id}`}
-              >
-                <PodcastCard 
-                  key={`recent-${episode.id}`}
-                  podcast={{
-                    ...episode,
-                    title: episode.title,
-                    cover_url: episode.cover_url || episode.series?.cover_url
-                  }}
-                  size="small" 
-                />
-              </Link>
-            ))}
+            {recentEpisodes.map((episode) => {
+              const seriesInfo = episode.series as any;
+              return (
+                <Link 
+                  key={episode.id} 
+                  to={`/series/${seriesInfo?.slug}/${episode.id}`}
+                >
+                  <PodcastCard 
+                    key={`recent-${episode.id}`}
+                    podcast={adaptEpisodeToPodcastCard(episode)}
+                    size="small" 
+                  />
+                </Link>
+              );
+            })}
           </div>
         </div>
       )}

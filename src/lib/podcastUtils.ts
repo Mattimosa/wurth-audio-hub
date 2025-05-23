@@ -130,7 +130,7 @@ export async function getSignedAudioUrl(audioPath: string): Promise<string | nul
 }
 
 // Create a new series
-export async function createSeries(seriesData: Partial<Series>, coverFile?: File): Promise<Series | null> {
+export async function createSeries(seriesData: Partial<Series> & { title: string, slug: string }, coverFile?: File): Promise<Series | null> {
   let coverUrl = null;
   
   if (coverFile) {
@@ -157,7 +157,7 @@ export async function createSeries(seriesData: Partial<Series>, coverFile?: File
 
 // Create a new episode
 export async function createEpisode(
-  episodeData: Partial<Episode>, 
+  episodeData: Partial<Episode> & { title: string, series_id: string }, 
   audioFile?: File, 
   coverFile?: File
 ): Promise<Episode | null> {
