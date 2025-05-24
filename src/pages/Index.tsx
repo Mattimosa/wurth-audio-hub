@@ -79,11 +79,9 @@ const Index = () => {
         ) : (
           <p className="text-gray-400 text-center py-8">
             Nessuna serie trovata per questa categoria. 
-            {isAdmin && (
-              <a href="/admin" className="text-wurth-red ml-1 hover:underline">
-                Aggiungi una nuova serie
-              </a>
-            )}
+            <a href="/admin" className="text-wurth-red ml-1 hover:underline">
+              Aggiungi una nuova serie
+            </a>
           </p>
         )}
       </div>
@@ -104,11 +102,9 @@ const Index = () => {
         ) : (
           <p className="text-gray-400 text-center py-8">
             Nessuna serie recente trovata. 
-            {isAdmin && (
-              <a href="/admin" className="text-wurth-red ml-1 hover:underline">
-                Aggiungi una nuova serie
-              </a>
-            )}
+            <a href="/admin" className="text-wurth-red ml-1 hover:underline">
+              Aggiungi una nuova serie
+            </a>
           </p>
         )}
       </div>

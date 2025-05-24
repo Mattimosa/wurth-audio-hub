@@ -2,15 +2,15 @@
 import React, { ReactNode, useState, createContext } from 'react';
 import Sidebar from '../components/Sidebar';
 import PodcastPlayer from '../components/PodcastPlayer';
-import { PodcastEpisode } from '../data/podcasts';
+import { Episode } from '../types/database';
 
 interface MainLayoutProps {
   children: ReactNode;
 }
 
 export const MainLayoutContext = createContext<{
-  currentEpisode: PodcastEpisode | null;
-  setCurrentEpisode: (episode: PodcastEpisode | null) => void;
+  currentEpisode: Episode | null;
+  setCurrentEpisode: (episode: Episode | null) => void;
   isPlaying: boolean;
   setIsPlaying: (isPlaying: boolean) => void;
 }>({
@@ -21,7 +21,7 @@ export const MainLayoutContext = createContext<{
 });
 
 const MainLayout = ({ children }: MainLayoutProps) => {
-  const [currentEpisode, setCurrentEpisode] = useState<PodcastEpisode | null>(null);
+  const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   
   return (
