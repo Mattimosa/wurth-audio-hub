@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import { Button } from "@/components/ui/button";
@@ -14,447 +14,212 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Upload, FileAudio, Play, Pause, CheckCircle, Mic, Radio, Zap } from 'lucide-react';
+import { Upload, FileAudio, Folder } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
-import { createSeries, createEpisode, fetchCategories, fetchSeriesByCategory, getAudioDuration } from '../lib/podcastUtils';
-import { slugify } from '../lib/utils';
-import { Category, Series } from '../types/podcast';
 
 const Admin = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [seriesList, setSeriesList] = useState<Series[]>([]);
-  
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState("Digitale");
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    slug: "",
+    author: "",
+    image: null,
+    audio: null,
   });
-  const [coverFile, setCoverFile] = useState<File | null>(null);
-  const [coverPreview, setCoverPreview] = useState<string | null>(null);
-  
-  const [seriesLoading, setSeriesLoading] = useState(false);
-  const [episodeLoading, setEpisodeLoading] = useState(false);
-  
+  const [loading, setLoading] = useState(false);
   const [episodeData, setEpisodeData] = useState({
-    seriesId: "",
-    title: "",
-    description: "",
+    episodeTitle: "",
+    episodeDescription: "",
+    episodeAudio: null,
   });
-  const [episodeAudioFile, setEpisodeAudioFile] = useState<File | null>(null);
-  const [episodeCoverFile, setEpisodeCoverFile] = useState<File | null>(null);
-  const [episodeCoverPreview, setEpisodeCoverPreview] = useState<string | null>(null);
   
-  // Preview functionality
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [audioDuration, setAudioDuration] = useState<number>(0);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  useEffect(() => {
-    async function loadInitialData() {
-      const categoriesData = await fetchCategories();
-      setCategories(categoriesData);
-      
-      if (categoriesData.length > 0) {
-        setSelectedCategory(categoriesData[0].id);
-      }
-      
-      const seriesData = await fetchSeriesByCategory();
-      setSeriesList(seriesData);
-    }
-    
-    loadInitialData();
-  }, []);
+  const categories = [
+    "Digitale",
+    "Costruzioni",
+    "Automotive",
+    "Industria",
+    "Sicurezza",
+    "Tecnica", 
+    "Formazione"
+  ];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => {
-      const newData = { ...prev, [name]: value };
-      
-      if (name === 'title') {
-        newData.slug = slugify(value);
-      }
-      
-      return newData;
-    });
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleCoverFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fileType: 'image' | 'audio') => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setCoverFile(file);
+      setFormData(prev => ({ ...prev, [fileType]: e.target.files![0] }));
       
-      const previewUrl = URL.createObjectURL(file);
-      setCoverPreview(previewUrl);
-      
+      // Show a toast notification for file selection
       toast({
-        title: "✨ Cover selezionata",
-        description: `${file.name} caricata con successo`,
+        title: "File selezionato",
+        description: `Hai selezionato: ${e.target.files[0].name}`,
       });
     }
   };
 
-  const handleEpisodeInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleEpisodeFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setEpisodeData(prev => ({ ...prev, episodeAudio: e.target.files![0] }));
+      
+      toast({
+        title: "Audio episodio selezionato",
+        description: `Hai selezionato: ${e.target.files[0].name}`,
+      });
+    }
+  };
+
+  const handleEpisodeInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setEpisodeData(prev => ({ ...prev, [name]: value }));
   };
-  
-  const handleEpisodeAudioChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setEpisodeAudioFile(file);
-      
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      const newPreviewUrl = URL.createObjectURL(file);
-      setPreviewUrl(newPreviewUrl);
-      
-      // Get audio duration
-      const duration = await getAudioDuration(file);
-      setAudioDuration(duration);
-      
-      toast({
-        title: "🎵 Audio caricato",
-        description: `${file.name} - Durata: ${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')}`,
-      });
-    }
-  };
-  
-  const handleEpisodeCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setEpisodeCoverFile(file);
-      
-      if (episodeCoverPreview) URL.revokeObjectURL(episodeCoverPreview);
-      const previewUrl = URL.createObjectURL(file);
-      setEpisodeCoverPreview(previewUrl);
-      
-      toast({
-        title: "📸 Cover episodio aggiunta",
-        description: `${file.name} pronta per il caricamento`,
-      });
-    }
-  };
 
-  const togglePlayPreview = () => {
-    if (!audioRef.current) return;
-    
-    if (isPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play().catch(error => {
-        console.error("Error playing audio:", error);
-        toast({
-          title: "Errore riproduzione",
-          description: "Impossibile riprodurre il file audio",
-          variant: "destructive"
-        });
-      });
-    }
-    setIsPlaying(!isPlaying);
-  };
-
-  const handleSubmitSeries = async (e: React.FormEvent) => {
+  const handleSubmitPodcast = (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     
-    if (!selectedCategory) {
+    // This is a mock implementation that would connect to a backend
+    // In a real application, we would upload files and save data to a database
+    setTimeout(() => {
       toast({
-        title: "❌ Categoria richiesta",
-        description: "Seleziona una categoria per la serie",
-        variant: "destructive"
+        title: "Podcast creato con successo",
+        description: "Il nuovo podcast è stato aggiunto alla piattaforma",
       });
-      return;
-    }
-    
-    try {
-      setSeriesLoading(true);
-      
-      const seriesData = {
-        category_id: selectedCategory,
-        title: formData.title,
-        description: formData.description,
-        slug: formData.slug,
-      };
-      
-      const newSeries = await createSeries(seriesData, coverFile || undefined);
-      
-      if (newSeries) {
-        toast({
-          title: "🎉 Serie creata con successo!",
-          description: `"${formData.title}" è ora disponibile sulla piattaforma`,
-        });
-        
-        // Reset form
-        setFormData({ title: "", description: "", slug: "" });
-        setCoverFile(null);
-        if (coverPreview) {
-          URL.revokeObjectURL(coverPreview);
-          setCoverPreview(null);
-        }
-        
-        // Reload series list
-        const updatedSeries = await fetchSeriesByCategory();
-        setSeriesList(updatedSeries);
-      } else {
-        toast({
-          title: "❌ Errore",
-          description: "Impossibile creare la serie podcast",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      console.error("Error creating series:", error);
-      toast({
-        title: "❌ Errore del sistema",
-        description: "Si è verificato un errore durante la creazione",
-        variant: "destructive"
+      setLoading(false);
+      setFormData({
+        title: "",
+        description: "",
+        author: "",
+        image: null,
+        audio: null,
       });
-    } finally {
-      setSeriesLoading(false);
-    }
+      navigate("/digital");
+    }, 1500);
   };
 
-  const handleSubmitEpisode = async (e: React.FormEvent) => {
+  const handleSubmitEpisode = (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     
-    if (!episodeData.seriesId) {
+    // Mock implementation
+    setTimeout(() => {
       toast({
-        title: "📺 Serie richiesta",
-        description: "Seleziona una serie per l'episodio",
-        variant: "destructive"
+        title: "Episodio aggiunto con successo",
+        description: "Il nuovo episodio è stato aggiunto al podcast",
       });
-      return;
-    }
-    
-    if (!episodeAudioFile) {
-      toast({
-        title: "🎵 Audio richiesto",
-        description: "Carica un file audio per l'episodio",
-        variant: "destructive"
+      setLoading(false);
+      setEpisodeData({
+        episodeTitle: "",
+        episodeDescription: "",
+        episodeAudio: null,
       });
-      return;
-    }
-    
-    try {
-      setEpisodeLoading(true);
-      
-      const newEpisodeData = {
-        series_id: episodeData.seriesId,
-        title: episodeData.title,
-        description: episodeData.description,
-        duration: audioDuration || null,
-      };
-      
-      const newEpisode = await createEpisode(
-        newEpisodeData, 
-        episodeAudioFile, 
-        episodeCoverFile || undefined
-      );
-      
-      if (newEpisode) {
-        toast({
-          title: "🚀 Episodio pubblicato!",
-          description: `"${episodeData.title}" è ora in diretta e disponibile per l'ascolto`,
-        });
-        
-        // Reset form
-        setEpisodeData({ seriesId: "", title: "", description: "" });
-        setEpisodeAudioFile(null);
-        setEpisodeCoverFile(null);
-        setAudioDuration(0);
-        if (previewUrl) {
-          URL.revokeObjectURL(previewUrl);
-          setPreviewUrl(null);
-        }
-        if (episodeCoverPreview) {
-          URL.revokeObjectURL(episodeCoverPreview);
-          setEpisodeCoverPreview(null);
-        }
-      } else {
-        toast({
-          title: "❌ Errore",
-          description: "Impossibile pubblicare l'episodio",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      console.error("Error creating episode:", error);
-      toast({
-        title: "❌ Errore di pubblicazione",
-        description: "Si è verificato un errore durante il caricamento",
-        variant: "destructive"
-      });
-    } finally {
-      setEpisodeLoading(false);
-    }
+    }, 1500);
   };
-
-  React.useEffect(() => {
-    return () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      if (coverPreview) URL.revokeObjectURL(coverPreview);
-      if (episodeCoverPreview) URL.revokeObjectURL(episodeCoverPreview);
-    };
-  }, []);
 
   return (
     <MainLayout>
       <div className="mb-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center mb-4">
-            <div className="w-12 h-12 bg-wurth-red rounded-full flex items-center justify-center mr-4">
-              <Mic className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-4xl font-bold text-white">Studio Würth</h1>
-              <p className="text-gray-400">Crea e pubblica i tuoi contenuti audio</p>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <Card className="bg-gradient-to-r from-green-600 to-green-500 border-none text-white">
-              <CardContent className="p-4 flex items-center">
-                <Radio className="h-8 w-8 mr-3" />
-                <div>
-                  <div className="text-2xl font-bold">{seriesList.length}</div>
-                  <div className="text-sm opacity-90">Serie attive</div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-gradient-to-r from-blue-600 to-blue-500 border-none text-white">
-              <CardContent className="p-4 flex items-center">
-                <Zap className="h-8 w-8 mr-3" />
-                <div>
-                  <div className="text-2xl font-bold">Live</div>
-                  <div className="text-sm opacity-90">Pubblicazione istantanea</div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-gradient-to-r from-purple-600 to-purple-500 border-none text-white">
-              <CardContent className="p-4 flex items-center">
-                <CheckCircle className="h-8 w-8 mr-3" />
-                <div>
-                  <div className="text-2xl font-bold">Pronto</div>
-                  <div className="text-sm opacity-90">Sistema operativo</div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+        <h1 className="text-3xl font-bold text-white mb-6">Amministrazione Podcast</h1>
         
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-          {/* Create New Series */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Create New Podcast */}
           <Card className="bg-wurth-gray text-white border-gray-700">
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <Radio className="mr-2 text-wurth-red" />
-                Nuova Serie Podcast
-              </CardTitle>
-              <CardDescription className="text-gray-400">
-                Crea una nuova serie per organizzare i tuoi episodi
-              </CardDescription>
+              <CardTitle>Crea Nuovo Podcast</CardTitle>
+              <CardDescription className="text-gray-400">Aggiungi una nuova serie podcast alla piattaforma</CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmitSeries} className="space-y-6">
+              <form onSubmit={handleSubmitPodcast} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="title" className="text-white font-medium">Titolo della Serie</Label>
+                  <Label htmlFor="title" className="text-white">Titolo del Podcast</Label>
                   <Input 
                     id="title" 
                     name="title"
                     value={formData.title}
                     onChange={handleInputChange}
-                    placeholder="es. Innovazione Würth, Storie di Successo..."
+                    placeholder="Inserisci il titolo del podcast"
                     required
-                    className="bg-gray-800 border-gray-600 text-white placeholder:text-gray-400 focus:border-wurth-red"
+                    className="bg-gray-800 border-gray-700 text-white"
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="description" className="text-white font-medium">Descrizione</Label>
+                  <Label htmlFor="description" className="text-white">Descrizione</Label>
                   <Textarea 
                     id="description" 
                     name="description"
                     value={formData.description}
                     onChange={handleInputChange}
-                    placeholder="Racconta di cosa parla questa serie..."
+                    placeholder="Descrivi il podcast"
                     required
-                    className="bg-gray-800 border-gray-600 text-white placeholder:text-gray-400 min-h-[100px] focus:border-wurth-red"
+                    className="bg-gray-800 border-gray-700 text-white min-h-[120px]"
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="slug" className="text-white font-medium">URL (generato automaticamente)</Label>
+                  <Label htmlFor="author" className="text-white">Autore</Label>
                   <Input 
-                    id="slug" 
-                    name="slug"
-                    value={formData.slug}
+                    id="author" 
+                    name="author"
+                    value={formData.author}
                     onChange={handleInputChange}
-                    placeholder="url-della-serie"
+                    placeholder="Nome dell'autore"
                     required
-                    className="bg-gray-800 border-gray-600 text-white focus:border-wurth-red"
+                    className="bg-gray-800 border-gray-700 text-white"
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="category" className="text-white font-medium">Categoria</Label>
+                  <Label htmlFor="category" className="text-white">Categoria</Label>
                   <select 
                     id="category"
-                    name="category"
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="w-full rounded-md border border-gray-600 bg-gray-800 text-white p-3 focus:border-wurth-red focus:outline-none"
+                    className="w-full rounded-md border border-gray-700 bg-gray-800 text-white p-2"
                     required
                   >
-                    <option value="">Seleziona una categoria</option>
                     {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                      <option key={cat} value={cat}>{cat}</option>
                     ))}
                   </select>
                 </div>
                 
-                <div className="space-y-4">
-                  <Label className="text-white font-medium">Cover della Serie</Label>
-                  <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-wurth-red transition-colors">
-                    <input 
-                      type="file"
-                      id="coverFile"
-                      accept="image/*"
-                      onChange={handleCoverFileChange}
-                      className="hidden"
-                    />
-                    <label htmlFor="coverFile" className="cursor-pointer">
-                      {coverPreview ? (
-                        <div>
-                          <img 
-                            src={coverPreview} 
-                            alt="Preview" 
-                            className="max-h-40 mx-auto rounded mb-4" 
-                          />
-                          <p className="text-sm text-gray-400">Clicca per cambiare</p>
-                        </div>
-                      ) : (
-                        <div>
-                          <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                          <p className="text-white mb-2">Carica la cover della serie</p>
-                          <p className="text-sm text-gray-400">PNG, JPG fino a 5MB</p>
-                        </div>
-                      )}
-                    </label>
+                <div className="space-y-2">
+                  <Label htmlFor="image" className="text-white">Immagine di copertina</Label>
+                  <div className="flex items-center space-x-2">
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={() => document.getElementById('image')?.click()}
+                      className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700"
+                    >
+                      <Upload className="mr-2 h-4 w-4" /> Seleziona immagine
+                    </Button>
+                    <span className="text-sm text-gray-400">
+                      {formData.image ? formData.image.name : 'Nessun file selezionato'}
+                    </span>
                   </div>
+                  <input 
+                    type="file"
+                    id="image"
+                    accept="image/*"
+                    onChange={(e) => handleFileChange(e, 'image')}
+                    className="hidden"
+                  />
                 </div>
               </form>
             </CardContent>
             <CardFooter>
               <Button 
-                onClick={handleSubmitSeries} 
-                className="w-full bg-wurth-red hover:bg-red-600 text-white font-semibold py-3"
-                disabled={seriesLoading}
+                onClick={handleSubmitPodcast} 
+                className="w-full bg-wurth-red hover:bg-wurth-red/90"
+                disabled={loading}
               >
-                {seriesLoading ? '🚀 Creazione in corso...' : '✨ Crea Serie'}
+                {loading ? 'Creazione in corso...' : 'Crea Podcast'}
               </Button>
             </CardFooter>
           </Card>
@@ -462,158 +227,148 @@ const Admin = () => {
           {/* Add New Episode */}
           <Card className="bg-wurth-gray text-white border-gray-700">
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <Mic className="mr-2 text-wurth-red" />
-                Nuovo Episodio
-              </CardTitle>
-              <CardDescription className="text-gray-400">
-                Pubblica un nuovo episodio in una serie esistente
-              </CardDescription>
+              <CardTitle>Aggiungi Episodio</CardTitle>
+              <CardDescription className="text-gray-400">Aggiungi un nuovo episodio a un podcast esistente</CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmitEpisode} className="space-y-6">
+              <form onSubmit={handleSubmitEpisode} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="seriesId" className="text-white font-medium">Serie di destinazione</Label>
+                  <Label htmlFor="podcastSelect" className="text-white">Seleziona Podcast</Label>
                   <select 
-                    id="seriesId"
-                    name="seriesId"
-                    value={episodeData.seriesId}
-                    onChange={handleEpisodeInputChange}
-                    className="w-full rounded-md border border-gray-600 bg-gray-800 text-white p-3 focus:border-wurth-red focus:outline-none"
+                    id="podcastSelect"
+                    className="w-full rounded-md border border-gray-700 bg-gray-800 text-white p-2"
                     required
                   >
-                    <option value="">Seleziona una serie</option>
-                    {seriesList.map((series) => (
-                      <option key={series.id} value={series.id}>{series.title}</option>
-                    ))}
+                    <option value="1">Innovazioni nel settore delle costruzioni</option>
+                    <option value="2">Automotive Solutions</option>
+                    <option value="3">Industria 4.0</option>
+                    <option value="d1">Innovazione Digitale Würth</option>
+                    <option value="d2">App e Servizi Würth</option>
+                    <option value="d3">E-Commerce e Soluzioni Online</option>
                   </select>
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="episodeTitle" className="text-white font-medium">Titolo dell'Episodio</Label>
+                  <Label htmlFor="episodeTitle" className="text-white">Titolo dell'Episodio</Label>
                   <Input 
                     id="episodeTitle" 
-                    name="title"
-                    value={episodeData.title}
+                    name="episodeTitle"
+                    value={episodeData.episodeTitle}
                     onChange={handleEpisodeInputChange}
-                    placeholder="es. Come l'AI sta trasformando il settore..."
+                    placeholder="Inserisci il titolo dell'episodio"
                     required
-                    className="bg-gray-800 border-gray-600 text-white placeholder:text-gray-400 focus:border-wurth-red"
+                    className="bg-gray-800 border-gray-700 text-white"
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="episodeDescription" className="text-white font-medium">Descrizione dell'Episodio</Label>
+                  <Label htmlFor="episodeDescription" className="text-white">Descrizione dell'Episodio</Label>
                   <Textarea 
                     id="episodeDescription" 
-                    name="description"
-                    value={episodeData.description}
+                    name="episodeDescription"
+                    value={episodeData.episodeDescription}
                     onChange={handleEpisodeInputChange}
-                    placeholder="Descrivi il contenuto di questo episodio..."
+                    placeholder="Descrivi l'episodio"
                     required
-                    className="bg-gray-800 border-gray-600 text-white placeholder:text-gray-400 min-h-[100px] focus:border-wurth-red"
+                    className="bg-gray-800 border-gray-700 text-white min-h-[120px]"
                   />
                 </div>
                 
-                <div className="space-y-4">
-                  <Label className="text-white font-medium">File Audio *</Label>
-                  <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-wurth-red transition-colors">
-                    <input 
-                      type="file"
-                      id="episodeAudio"
-                      accept="audio/*"
-                      onChange={handleEpisodeAudioChange}
-                      className="hidden"
-                    />
-                    <label htmlFor="episodeAudio" className="cursor-pointer">
-                      {episodeAudioFile ? (
-                        <div>
-                          <FileAudio className="h-12 w-12 text-wurth-red mx-auto mb-4" />
-                          <p className="text-white mb-2">{episodeAudioFile.name}</p>
-                          {audioDuration > 0 && (
-                            <p className="text-sm text-green-400">
-                              Durata: {Math.floor(audioDuration / 60)}:{(audioDuration % 60).toString().padStart(2, '0')}
-                            </p>
-                          )}
-                        </div>
-                      ) : (
-                        <div>
-                          <FileAudio className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                          <p className="text-white mb-2">Carica il file audio</p>
-                          <p className="text-sm text-gray-400">MP3, WAV, M4A fino a 100MB</p>
-                        </div>
-                      )}
-                    </label>
+                <div className="space-y-2">
+                  <Label htmlFor="episodeAudio" className="text-white">File Audio</Label>
+                  <div className="flex items-center space-x-2">
+                    <Button 
+                      type="button" 
+                      variant="outline"
+                      onClick={() => document.getElementById('episodeAudio')?.click()}
+                      className="bg-gray-800 border-gray-700 text-white hover:bg-gray-700"
+                    >
+                      <FileAudio className="mr-2 h-4 w-4" /> Seleziona file audio
+                    </Button>
+                    <span className="text-sm text-gray-400">
+                      {episodeData.episodeAudio ? episodeData.episodeAudio.name : 'Nessun file selezionato'}
+                    </span>
                   </div>
-                  
-                  {previewUrl && (
-                    <div className="bg-gray-800 p-4 rounded-lg">
-                      <Label className="text-white mb-3 block">🎧 Anteprima Audio</Label>
-                      <div className="flex items-center space-x-3">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="bg-wurth-red border-wurth-red text-white hover:bg-red-600 rounded-full p-3 h-12 w-12"
-                          onClick={togglePlayPreview}
-                        >
-                          {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-                        </Button>
-                        <div className="flex-1">
-                          <audio 
-                            ref={audioRef} 
-                            src={previewUrl} 
-                            onEnded={() => setIsPlaying(false)}
-                            onPlay={() => setIsPlaying(true)}
-                            onPause={() => setIsPlaying(false)}
-                            className="w-full" 
-                            controls 
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                  <input 
+                    type="file"
+                    id="episodeAudio"
+                    accept="audio/*"
+                    onChange={handleEpisodeFileChange}
+                    className="hidden"
+                  />
                 </div>
                 
-                <div className="space-y-4">
-                  <Label className="text-white font-medium">Cover Episodio (opzionale)</Label>
-                  <div className="border-2 border-dashed border-gray-600 rounded-lg p-4 text-center hover:border-wurth-red transition-colors">
-                    <input 
-                      type="file"
-                      id="episodeCover"
-                      accept="image/*"
-                      onChange={handleEpisodeCoverChange}
-                      className="hidden"
-                    />
-                    <label htmlFor="episodeCover" className="cursor-pointer">
-                      {episodeCoverPreview ? (
-                        <div>
-                          <img 
-                            src={episodeCoverPreview} 
-                            alt="Episode Cover Preview" 
-                            className="max-h-32 mx-auto rounded mb-2" 
-                          />
-                          <p className="text-sm text-gray-400">Clicca per cambiare</p>
-                        </div>
-                      ) : (
-                        <div>
-                          <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                          <p className="text-sm text-gray-400">Cover personalizzata per questo episodio</p>
-                        </div>
-                      )}
-                    </label>
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="episodeDate" className="text-white">Data di pubblicazione</Label>
+                  <Input 
+                    id="episodeDate" 
+                    type="date"
+                    className="bg-gray-800 border-gray-700 text-white"
+                    required
+                  />
                 </div>
               </form>
             </CardContent>
             <CardFooter>
               <Button 
                 onClick={handleSubmitEpisode} 
-                className="w-full bg-wurth-red hover:bg-red-600 text-white font-semibold py-3"
-                disabled={episodeLoading}
+                className="w-full bg-wurth-red hover:bg-wurth-red/90"
+                disabled={loading}
               >
-                {episodeLoading ? '🚀 Pubblicazione in corso...' : '📡 Pubblica Episodio'}
+                {loading ? 'Caricamento in corso...' : 'Aggiungi Episodio'}
               </Button>
             </CardFooter>
+          </Card>
+        </div>
+        
+        <div className="mt-8">
+          <Card className="bg-wurth-gray text-white border-gray-700">
+            <CardHeader>
+              <CardTitle>Gestione File</CardTitle>
+              <CardDescription className="text-gray-400">Gestisci i file dei podcast caricati</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 gap-4">
+                <div className="bg-gray-800 p-4 rounded-md flex items-center justify-between">
+                  <div className="flex items-center">
+                    <FileAudio className="h-8 w-8 mr-3 text-wurth-red" />
+                    <div>
+                      <h3 className="font-medium">Episodio_1_Digitale.mp3</h3>
+                      <p className="text-sm text-gray-400">12.4 MB • Caricato il 18/05/2025</p>
+                    </div>
+                  </div>
+                  <Button variant="outline" className="border-gray-700 text-white hover:bg-gray-700">
+                    Scarica
+                  </Button>
+                </div>
+                
+                <div className="bg-gray-800 p-4 rounded-md flex items-center justify-between">
+                  <div className="flex items-center">
+                    <FileAudio className="h-8 w-8 mr-3 text-wurth-red" />
+                    <div>
+                      <h3 className="font-medium">Episodio_2_Digitale.mp3</h3>
+                      <p className="text-sm text-gray-400">9.8 MB • Caricato il 20/05/2025</p>
+                    </div>
+                  </div>
+                  <Button variant="outline" className="border-gray-700 text-white hover:bg-gray-700">
+                    Scarica
+                  </Button>
+                </div>
+                
+                <div className="bg-gray-800 p-4 rounded-md flex items-center justify-between">
+                  <div className="flex items-center">
+                    <FileAudio className="h-8 w-8 mr-3 text-wurth-red" />
+                    <div>
+                      <h3 className="font-medium">Innovazione_Episodio_1.mp3</h3>
+                      <p className="text-sm text-gray-400">15.2 MB • Caricato il 15/05/2025</p>
+                    </div>
+                  </div>
+                  <Button variant="outline" className="border-gray-700 text-white hover:bg-gray-700">
+                    Scarica
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
           </Card>
         </div>
       </div>
