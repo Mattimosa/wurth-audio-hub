@@ -2,27 +2,29 @@
 import React, { useState } from 'react';
 import MainLayout from '../layouts/MainLayout';
 import PodcastCard from '../components/PodcastCard';
-import { Clock, Heart, List, ListMusic } from 'lucide-react';
-import { podcasts } from '../data/podcasts';
+import { Clock, Heart, ListMusic } from 'lucide-react';
+import { useSeries } from '../hooks/useSeries';
 
 const Library = () => {
   const [activeTab, setActiveTab] = useState('recenti');
+  const { series } = useSeries();
   
-  // Mock data for saved podcasts
-  const recentlyPlayed = podcasts.slice(0, 3);
-  const favorites = podcasts.slice(2, 5);
+  // Mock data for saved podcasts - using real series
+  const recentlyPlayed = series.slice(0, 3);
+  const favorites = series.slice(2, 5);
+  
   const playlists = [
     { 
       id: "pl1", 
       name: "I migliori podcast tecnici", 
       description: "Una selezione dei migliori podcast tecnici di Würth",
-      podcasts: podcasts.filter(p => p.category === "Tecnica" || p.category === "Costruzioni")
+      series: series.filter(s => s.category?.name === "Tecnica" || s.category?.name === "Costruzioni")
     },
     { 
       id: "pl2", 
       name: "Podcast sulla sicurezza", 
       description: "Tutto sulla sicurezza nel lavoro",
-      podcasts: podcasts.filter(p => p.category === "Sicurezza") 
+      series: series.filter(s => s.category?.name === "Sicurezza") 
     }
   ];
   
@@ -72,8 +74,8 @@ const Library = () => {
         {activeTab === 'recenti' && (
           <div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-              {recentlyPlayed.map((podcast) => (
-                <PodcastCard key={podcast.id} podcast={podcast} />
+              {recentlyPlayed.map((seriesItem) => (
+                <PodcastCard key={seriesItem.id} podcast={seriesItem} />
               ))}
             </div>
             {recentlyPlayed.length === 0 && (
@@ -87,8 +89,8 @@ const Library = () => {
         {activeTab === 'preferiti' && (
           <div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-              {favorites.map((podcast) => (
-                <PodcastCard key={podcast.id} podcast={podcast} />
+              {favorites.map((seriesItem) => (
+                <PodcastCard key={seriesItem.id} podcast={seriesItem} />
               ))}
             </div>
             {favorites.length === 0 && (
@@ -108,8 +110,8 @@ const Library = () => {
                 </div>
                 <p className="text-gray-400 mb-4">{playlist.description}</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                  {playlist.podcasts.slice(0, 5).map((podcast) => (
-                    <PodcastCard key={`${playlist.id}-${podcast.id}`} podcast={podcast} size="small" />
+                  {playlist.series.slice(0, 5).map((seriesItem) => (
+                    <PodcastCard key={`${playlist.id}-${seriesItem.id}`} podcast={seriesItem} size="small" />
                   ))}
                 </div>
               </div>

@@ -1,11 +1,11 @@
 
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { Play, Pause, SkipBack, SkipForward, Volume2, Volume1, VolumeX } from 'lucide-react';
-import { PodcastEpisode } from '../data/podcasts';
+import { Episode } from '../types/database';
 import { MainLayoutContext } from '../layouts/MainLayout';
 
 interface PodcastPlayerProps {
-  episode: PodcastEpisode;
+  episode: Episode;
 }
 
 const PodcastPlayer: React.FC<PodcastPlayerProps> = ({ episode }) => {
@@ -19,6 +19,11 @@ const PodcastPlayer: React.FC<PodcastPlayerProps> = ({ episode }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
   useEffect(() => {
+    if (!episode.audio_url) {
+      setError("URL audio non disponibile");
+      return;
+    }
+
     // Create new audio element when episode changes
     const audio = new Audio();
     audioRef.current = audio;
@@ -45,7 +50,7 @@ const PodcastPlayer: React.FC<PodcastPlayerProps> = ({ episode }) => {
     audio.addEventListener('error', handleError);
     
     // Set the source and try to load it
-    audio.src = episode.audioUrl;
+    audio.src = episode.audio_url;
     audio.load();
     
     // Play if isPlaying is true
@@ -137,7 +142,7 @@ const PodcastPlayer: React.FC<PodcastPlayerProps> = ({ episode }) => {
     <div className="flex items-center justify-between h-full px-4 py-3 bg-wurth-gray">
       <div className="flex items-center">
         <img 
-          src={episode.imageUrl} 
+          src={episode.cover_url || episode.series?.cover_url || "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158"} 
           alt={episode.title}
           className="w-14 h-14 object-cover rounded shadow mr-4" 
         />

@@ -3,11 +3,12 @@ import React, { useState } from 'react';
 import MainLayout from '../layouts/MainLayout';
 import PodcastCard from '../components/PodcastCard';
 import { Search as SearchIcon } from 'lucide-react';
-import { podcasts } from '../data/podcasts';
+import { useSeries } from '../hooks/useSeries';
 
 const Search = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<typeof podcasts>([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const { series, categories } = useSeries();
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,13 +19,12 @@ const Search = () => {
     }
     
     // Simple search function that looks at titles, descriptions, and categories
-    const results = podcasts.filter(podcast => {
+    const results = series.filter(s => {
       const query = searchQuery.toLowerCase();
       return (
-        podcast.title.toLowerCase().includes(query) || 
-        podcast.description.toLowerCase().includes(query) ||
-        podcast.category.toLowerCase().includes(query) ||
-        podcast.author.toLowerCase().includes(query)
+        s.title.toLowerCase().includes(query) || 
+        (s.description && s.description.toLowerCase().includes(query)) ||
+        (s.category && s.category.name.toLowerCase().includes(query))
       );
     });
     
@@ -41,7 +41,7 @@ const Search = () => {
             <SearchIcon className="w-5 h-5 text-gray-400 mr-3" />
             <input
               type="text"
-              placeholder="Cerca podcast, episodi o categorie..."
+              placeholder="Cerca serie, episodi o categorie..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="bg-transparent border-none outline-none text-white flex-1"
@@ -59,13 +59,13 @@ const Search = () => {
           <div>
             <h2 className="text-xl font-bold text-white mb-4">Categorie popolari</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {["Costruzioni", "Automotive", "Industria", "Sicurezza", "Tecnica", "Formazione"].map(category => (
+              {categories.map(category => (
                 <div 
-                  key={category} 
+                  key={category.id} 
                   className="bg-wurth-gray rounded-lg overflow-hidden cursor-pointer hover:bg-opacity-80 transition-colors"
                 >
                   <div className="h-24 bg-gradient-to-br from-wurth-red to-black flex items-center justify-center">
-                    <h3 className="text-lg font-bold text-white">{category}</h3>
+                    <h3 className="text-lg font-bold text-white">{category.name}</h3>
                   </div>
                 </div>
               ))}
@@ -78,8 +78,8 @@ const Search = () => {
             <h2 className="text-xl font-bold text-white mb-4">Risultati della ricerca</h2>
             {searchResults.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                {searchResults.map((podcast) => (
-                  <PodcastCard key={podcast.id} podcast={podcast} />
+                {searchResults.map((seriesItem) => (
+                  <PodcastCard key={seriesItem.id} podcast={seriesItem} />
                 ))}
               </div>
             ) : (

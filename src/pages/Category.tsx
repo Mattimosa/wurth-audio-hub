@@ -4,19 +4,19 @@ import { useParams, Link } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import PodcastCard from '../components/PodcastCard';
 import { Podcast, Headphones } from 'lucide-react';
-import { usePodcasts } from '../contexts/PodcastContext';
+import { useSeries } from '../hooks/useSeries';
 import { MainLayoutContext } from '../layouts/MainLayout';
 import { useContext } from 'react';
 
 const Category = () => {
   const { categoryName = "Tutti" } = useParams<{ categoryName: string }>();
-  const { podcasts } = usePodcasts();
+  const { series } = useSeries();
   const { setCurrentEpisode, setIsPlaying } = useContext(MainLayoutContext);
   
-  // Filter podcasts by category
-  const filteredPodcasts = categoryName === "Tutti" 
-    ? podcasts 
-    : podcasts.filter(podcast => podcast.category === categoryName);
+  // Filter series by category
+  const filteredSeries = categoryName === "Tutti" 
+    ? series 
+    : series.filter(s => s.category?.name === categoryName);
   
   // Set background colors based on category
   const getCategoryStyle = () => {
@@ -67,9 +67,9 @@ const Category = () => {
     return <Podcast className="h-12 w-12 text-white opacity-80" />;
   };
 
-  const playEpisode = (podcast: any, episodeIndex: number) => {
-    if (podcast.episodes && podcast.episodes.length > episodeIndex) {
-      setCurrentEpisode(podcast.episodes[episodeIndex]);
+  const playEpisode = (seriesItem: any, episodeIndex: number) => {
+    if (seriesItem.episodes && seriesItem.episodes.length > episodeIndex) {
+      setCurrentEpisode(seriesItem.episodes[episodeIndex]);
       setIsPlaying(true);
     }
   };
@@ -87,21 +87,21 @@ const Category = () => {
               <p className="text-gray-200 mt-2">
                 {categoryName === "Tutti" 
                   ? "Tutti i podcast disponibili su Würth Podcast" 
-                  : `Podcast della categoria ${categoryName} - ${filteredPodcasts.length} serie disponibili`}
+                  : `Podcast della categoria ${categoryName} - ${filteredSeries.length} serie disponibili`}
               </p>
             </div>
           </div>
         </div>
         
-        {filteredPodcasts.length > 0 ? (
+        {filteredSeries.length > 0 ? (
           <>
             <div className="flex items-center mb-6">
               <Podcast className="mr-2 text-wurth-red" />
               <h2 className="text-xl font-bold text-white">Serie Podcast</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-              {filteredPodcasts.map((podcast) => (
-                <PodcastCard key={podcast.id} podcast={podcast} />
+              {filteredSeries.map((seriesItem) => (
+                <PodcastCard key={seriesItem.id} podcast={seriesItem} />
               ))}
             </div>
             
@@ -110,31 +110,31 @@ const Category = () => {
                 <Headphones className="mr-2 text-wurth-red" />
                 <h2 className="text-xl font-bold text-white">Episodi Recenti</h2>
               </div>
-              {filteredPodcasts.some(podcast => podcast.episodes.length > 0) ? (
+              {filteredSeries.some(seriesItem => seriesItem.episodes && seriesItem.episodes.length > 0) ? (
                 <div className="space-y-4">
-                  {filteredPodcasts
-                    .filter(podcast => podcast.episodes.length > 0)
-                    .flatMap(podcast => 
-                      podcast.episodes.slice(0, 1).map(episode => (
+                  {filteredSeries
+                    .filter(seriesItem => seriesItem.episodes && seriesItem.episodes.length > 0)
+                    .flatMap(seriesItem => 
+                      seriesItem.episodes!.slice(0, 1).map(episode => (
                         <div 
                           key={episode.id} 
                           className="bg-wurth-gray p-4 rounded-md hover:bg-gray-800 transition-colors cursor-pointer"
-                          onClick={() => playEpisode(podcast, podcast.episodes.findIndex((ep: any) => ep.id === episode.id))}
+                          onClick={() => playEpisode(seriesItem, seriesItem.episodes!.findIndex((ep: any) => ep.id === episode.id))}
                         >
                           <div className="flex items-center">
                             <img 
-                              src={episode.imageUrl} 
+                              src={episode.cover_url || seriesItem.cover_url || "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158"} 
                               alt={episode.title}
                               className="w-16 h-16 object-cover rounded mr-4" 
                             />
                             <div className="flex-1">
                               <h3 className="font-medium text-white">{episode.title}</h3>
-                              <Link to={`/podcast/${podcast.id}`} className="text-sm text-gray-400 line-clamp-1 hover:text-wurth-red">
-                                {podcast.title}
+                              <Link to={`/podcast/${seriesItem.id}`} className="text-sm text-gray-400 line-clamp-1 hover:text-wurth-red">
+                                {seriesItem.title}
                               </Link>
                             </div>
                             <div className="text-sm text-gray-400">
-                              {episode.duration}
+                              {episode.duration ? `${Math.floor(episode.duration / 60)}:${(episode.duration % 60).toString().padStart(2, '0')}` : '--:--'}
                             </div>
                           </div>
                         </div>

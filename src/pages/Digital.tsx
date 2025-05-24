@@ -1,79 +1,9 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import MainLayout from '../layouts/MainLayout';
 import PodcastCard from '../components/PodcastCard';
 import { Code, Layers, Layout } from 'lucide-react';
-
-// Mock digital podcast data
-const digitalPodcasts = [
-  {
-    id: "d1",
-    title: "Innovazione Digitale Würth",
-    description: "Esplora le ultime innovazioni digitali di Würth Italia e come stanno trasformando il settore.",
-    imageUrl: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b",
-    category: "Digitale",
-    author: "Marco Digital",
-    isFeatured: true,
-    episodes: [
-      {
-        id: "d1-1",
-        title: "Ep 1: Trasformazione digitale nel settore industriale",
-        description: "Come Würth sta guidando la trasformazione digitale nel settore industriale.",
-        imageUrl: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b",
-        audioUrl: "https://example.com/digital1.mp3",
-        duration: "28:45",
-        date: "15 Apr 2025"
-      },
-      {
-        id: "d1-2",
-        title: "Ep 2: Piattaforme digitali per professionisti",
-        description: "Le piattaforme digitali Würth per professionisti e come utilizzarle al meglio.",
-        imageUrl: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b",
-        audioUrl: "https://example.com/digital2.mp3",
-        duration: "32:10",
-        date: "22 Apr 2025"
-      }
-    ]
-  },
-  {
-    id: "d2",
-    title: "App e Servizi Würth",
-    description: "Scopri tutte le app e i servizi digitali offerti da Würth Italia.",
-    imageUrl: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6",
-    category: "Digitale",
-    author: "Team Digital Würth",
-    episodes: [
-      {
-        id: "d2-1",
-        title: "Ep 1: Würth App - Guida completa",
-        description: "Come utilizzare al meglio la Würth App per gestire ordini e consultare prodotti.",
-        imageUrl: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6",
-        audioUrl: "https://example.com/appguide.mp3",
-        duration: "24:30",
-        date: "5 May 2025"
-      }
-    ]
-  },
-  {
-    id: "d3",
-    title: "E-Commerce e Soluzioni Online",
-    description: "Come ottimizzare l'esperienza di acquisto attraverso i canali digitali Würth.",
-    imageUrl: "https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7",
-    category: "Digitale",
-    author: "Team Digital Würth",
-    episodes: [
-      {
-        id: "d3-1",
-        title: "Ep 1: Ottimizzare gli acquisti online",
-        description: "Strategie e consigli per ottimizzare gli acquisti online sulla piattaforma Würth.",
-        imageUrl: "https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7",
-        audioUrl: "https://example.com/ecommerce.mp3",
-        duration: "26:15",
-        date: "12 May 2025"
-      }
-    ]
-  }
-];
+import { useSeries } from '../hooks/useSeries';
 
 // Digital services offered by Würth
 const digitalServices = [
@@ -98,6 +28,11 @@ const digitalServices = [
 ];
 
 const Digital = () => {
+  const { series } = useSeries();
+  
+  // Filter for digital category
+  const digitalSeries = series.filter(s => s.category?.name === "Digitale");
+  
   return (
     <MainLayout>
       <div className="mb-10">
@@ -123,24 +58,43 @@ const Digital = () => {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-white">Podcast Digitali</h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {digitalPodcasts.map((podcast) => (
-              <PodcastCard key={podcast.id} podcast={podcast} />
-            ))}
-          </div>
+          {digitalSeries.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+              {digitalSeries.map((seriesItem) => (
+                <PodcastCard key={seriesItem.id} podcast={seriesItem} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-400 text-center py-8">
+              Nessuna serie digitale trovata. 
+              <a href="/admin" className="text-wurth-red ml-1 hover:underline">
+                Aggiungi una nuova serie digitale
+              </a>
+            </p>
+          )}
         </div>
         
         <div className="mb-10">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-white">Episodi Recenti</h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {digitalPodcasts.map((podcast) => (
-              podcast.episodes.length > 0 && (
-                <PodcastCard key={`recent-${podcast.id}`} podcast={podcast} size="small" />
-              )
-            ))}
-          </div>
+          {digitalSeries.some(seriesItem => seriesItem.episodes && seriesItem.episodes.length > 0) ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+              {digitalSeries
+                .filter(seriesItem => seriesItem.episodes && seriesItem.episodes.length > 0)
+                .map((seriesItem) => (
+                  <PodcastCard key={`recent-${seriesItem.id}`} podcast={seriesItem} size="small" />
+                ))
+              }
+            </div>
+          ) : (
+            <p className="text-gray-400 text-center py-8">
+              Nessun episodio recente trovato. 
+              <a href="/admin" className="text-wurth-red ml-1 hover:underline">
+                Aggiungi un nuovo episodio
+              </a>
+            </p>
+          )}
         </div>
       </div>
     </MainLayout>

@@ -1,11 +1,11 @@
 
 import React, { useContext } from 'react';
 import { Play } from 'lucide-react';
-import { Podcast } from '../data/podcasts';
+import { Series } from '../types/database';
 import { MainLayoutContext } from '../layouts/MainLayout';
 
 interface FeaturedPodcastProps {
-  podcast: Podcast;
+  podcast: Series;
 }
 
 const FeaturedPodcast: React.FC<FeaturedPodcastProps> = ({ podcast }) => {
@@ -23,7 +23,7 @@ const FeaturedPodcast: React.FC<FeaturedPodcastProps> = ({ podcast }) => {
       <div className="flex flex-col md:flex-row items-center p-6 gap-6">
         <div className="relative group">
           <img 
-            src={podcast.imageUrl} 
+            src={podcast.cover_url || "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158"} 
             alt={podcast.title} 
             className="w-40 h-40 md:w-56 md:h-56 object-cover rounded shadow-lg" 
           />

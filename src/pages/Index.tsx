@@ -4,12 +4,10 @@ import MainLayout from '../layouts/MainLayout';
 import PodcastCard from '../components/PodcastCard';
 import FeaturedPodcast from '../components/FeaturedPodcast';
 import { useSeries } from '../hooks/useSeries';
-import { useAuth } from '../hooks/useAuth';
 
 const Index = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("Tutti");
   const { series, categories, loading } = useSeries();
-  const { isAdmin } = useAuth();
   
   // Get featured series (first 3)
   const featuredSeries = series.slice(0, 3);
