@@ -14,7 +14,6 @@ import Library from "./pages/Library";
 import Category from "./pages/Category";
 import Admin from "./pages/Admin";
 import PodcastDetail from "./pages/PodcastDetail";
-import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,7 +26,6 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/auth" element={<Auth />} />
             <Route path="/" element={
               <ProtectedRoute>
                 <Index />
