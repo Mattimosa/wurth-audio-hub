@@ -2,11 +2,11 @@
 import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { Play } from 'lucide-react';
-import { Podcast } from '../data/podcasts';
+import { Series } from '../types/database';
 import { MainLayoutContext } from '../layouts/MainLayout';
 
 interface PodcastCardProps {
-  podcast: Podcast;
+  podcast: Series;
   size?: 'small' | 'medium' | 'large';
 }
 
@@ -42,7 +42,7 @@ const PodcastCard: React.FC<PodcastCardProps> = ({ podcast, size = 'medium' }) =
     >
       <div className="relative group">
         <img 
-          src={podcast.imageUrl} 
+          src={podcast.cover_url || "https://images.unsplash.com/photo-1526628953301-3e589a6a8b74"} 
           alt={podcast.title} 
           className={`${imageClasses[size]} object-cover rounded shadow-lg mb-4`} 
         />
@@ -54,7 +54,10 @@ const PodcastCard: React.FC<PodcastCardProps> = ({ podcast, size = 'medium' }) =
         </button>
       </div>
       <h3 className="font-bold text-white line-clamp-2">{podcast.title}</h3>
-      <p className="text-sm text-gray-400 mt-1">{podcast.author}</p>
+      <p className="text-sm text-gray-400 mt-1">{podcast.category?.name || 'Senza categoria'}</p>
+      {podcast.episode_count !== undefined && (
+        <p className="text-xs text-gray-500 mt-1">{podcast.episode_count} episodi</p>
+      )}
     </Link>
   );
 };
