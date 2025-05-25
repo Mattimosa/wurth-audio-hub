@@ -69,6 +69,13 @@ export type Database = {
             referencedRelation: "series"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_episodes_series"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "series"
+            referencedColumns: ["id"]
+          },
         ]
       }
       series: {
@@ -103,6 +110,13 @@ export type Database = {
           title?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_series_category"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "series_category_id_fkey"
             columns: ["category_id"]

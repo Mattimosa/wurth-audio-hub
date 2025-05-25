@@ -13,7 +13,9 @@ const FeaturedPodcast: React.FC<FeaturedPodcastProps> = ({ podcast }) => {
   
   const handlePlayPodcast = () => {
     if (podcast.episodes && podcast.episodes.length > 0) {
-      setCurrentEpisode(podcast.episodes[0]);
+      // Prendi il primo episodio disponibile
+      const firstEpisode = podcast.episodes[0];
+      setCurrentEpisode(firstEpisode);
       setIsPlaying(true);
     }
   };
@@ -27,12 +29,14 @@ const FeaturedPodcast: React.FC<FeaturedPodcastProps> = ({ podcast }) => {
             alt={podcast.title} 
             className="w-40 h-40 md:w-56 md:h-56 object-cover rounded shadow-lg" 
           />
-          <button 
-            onClick={handlePlayPodcast}
-            className="absolute right-3 bottom-3 bg-wurth-red text-white p-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:scale-105 transform"
-          >
-            <Play className="w-6 h-6" />
-          </button>
+          {podcast.episodes && podcast.episodes.length > 0 && (
+            <button 
+              onClick={handlePlayPodcast}
+              className="absolute right-3 bottom-3 bg-wurth-red text-white p-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:scale-105 transform"
+            >
+              <Play className="w-6 h-6" />
+            </button>
+          )}
         </div>
         
         <div className="md:ml-4 flex-1">
@@ -40,12 +44,18 @@ const FeaturedPodcast: React.FC<FeaturedPodcastProps> = ({ podcast }) => {
           <h2 className="text-2xl md:text-4xl font-bold text-white mt-2">{podcast.title}</h2>
           <p className="text-gray-300 mt-3 line-clamp-2 md:line-clamp-3">{podcast.description}</p>
           <div className="mt-5 flex space-x-3">
-            <button 
-              onClick={handlePlayPodcast}
-              className="bg-wurth-red hover:bg-opacity-80 text-white font-medium py-2 px-6 rounded-full"
-            >
-              Ascolta ora
-            </button>
+            {podcast.episodes && podcast.episodes.length > 0 ? (
+              <button 
+                onClick={handlePlayPodcast}
+                className="bg-wurth-red hover:bg-opacity-80 text-white font-medium py-2 px-6 rounded-full"
+              >
+                Ascolta ora
+              </button>
+            ) : (
+              <div className="bg-gray-600 text-white font-medium py-2 px-6 rounded-full opacity-50">
+                Nessun episodio disponibile
+              </div>
+            )}
             <button className="border border-gray-400 text-white hover:bg-white hover:bg-opacity-10 font-medium py-2 px-6 rounded-full">
               Esplora
             </button>

@@ -3,7 +3,7 @@ export interface Category {
   id: string
   name: string
   slug: string
-  created_at: string
+  created_at?: string
 }
 
 export interface Series {
@@ -37,4 +37,10 @@ export interface UserRole {
   id: string
   user_id: string
   role: 'admin' | 'user'
+}
+
+// Helper types for UI
+export interface PlaylistItem {
+  episode: Episode
+  series: Series
 }
