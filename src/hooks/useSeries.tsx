@@ -1,19 +1,19 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
-import { Series, Category } from '@/types/database'
+import { Series } from '@/types/database'
 import { useToast } from '@/hooks/use-toast'
+import { useCategories } from './useCategories'
 
 export function useSeries() {
   const [series, setSeries] = useState<Series[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [featuredSeries, setFeaturedSeries] = useState<Series | null>(null)
   const { toast } = useToast()
+  const { categories } = useCategories()
 
   useEffect(() => {
     fetchSeries()
-    fetchCategories()
   }, [])
 
   const fetchSeries = async () => {
@@ -57,26 +57,6 @@ export function useSeries() {
       })
     } finally {
       setLoading(false)
-    }
-  }
-
-  const fetchCategories = async () => {
-    try {
-      console.log('Fetching categories...')
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .order('name')
-
-      if (error) {
-        console.error('Error fetching categories:', error)
-        throw error
-      }
-
-      console.log('Categories fetched:', data)
-      setCategories(data || [])
-    } catch (error) {
-      console.error('Error in fetchCategories:', error)
     }
   }
 
@@ -157,7 +137,7 @@ export function useSeries() {
       console.error('Error creating series:', error)
       toast({
         title: "Errore",
-        description: "Impossibile creare la serie",
+        description: `Impossibile creare la serie: ${error.message}`,
         variant: "destructive"
       })
       throw error

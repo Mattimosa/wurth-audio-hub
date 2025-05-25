@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,10 +7,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, Trash2 } from 'lucide-react';
 import { useSeries } from '../hooks/useSeries';
+import { useCategories } from '../hooks/useCategories';
 import { useToast } from "@/hooks/use-toast";
 
 const AdminSeriesManager = () => {
-  const { series, categories, createSeries, deleteSeries } = useSeries();
+  const { series, createSeries, deleteSeries } = useSeries();
+  const { categories } = useCategories();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   
@@ -72,7 +75,7 @@ const AdminSeriesManager = () => {
       if (fileInput) fileInput.value = '';
       
     } catch (error) {
-      // Error handled in hook
+      console.error('Error in form submission:', error);
     } finally {
       setLoading(false);
     }

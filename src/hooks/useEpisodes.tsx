@@ -148,7 +148,7 @@ export function useEpisodes(seriesId?: string) {
       console.error('Error creating episode:', error)
       toast({
         title: "Errore",
-        description: "Impossibile creare l'episodio",
+        description: `Impossibile creare l'episodio: ${error.message}`,
         variant: "destructive"
       })
       throw error

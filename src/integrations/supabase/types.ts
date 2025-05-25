@@ -63,14 +63,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "episodes_series_id_fkey"
-            columns: ["series_id"]
-            isOneToOne: false
-            referencedRelation: "series"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_episodes_series"
+            foreignKeyName: "episodes_series_fkey"
             columns: ["series_id"]
             isOneToOne: false
             referencedRelation: "series"
@@ -111,14 +104,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_series_category"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "series_category_id_fkey"
+            foreignKeyName: "series_category_fkey"
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
