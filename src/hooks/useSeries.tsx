@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { Series } from '@/types/database'
@@ -23,7 +22,7 @@ export function useSeries() {
         .from('series')
         .select(`
           *,
-          category:categories(*),
+          category:categories!series_category_id_fkey(*),
           episodes(*)
         `)
         .order('created_at', { ascending: false })
@@ -114,7 +113,7 @@ export function useSeries() {
         .insert(seriesPayload)
         .select(`
           *,
-          category:categories(*),
+          category:categories!series_category_id_fkey(*),
           episodes(*)
         `)
         .single()
