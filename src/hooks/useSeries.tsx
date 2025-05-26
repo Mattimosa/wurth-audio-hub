@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { Series } from '@/types/database'
@@ -18,31 +19,61 @@ export function useSeries() {
   const fetchSeries = async () => {
     try {
       console.log('Fetching series...')
-      const { data, error } = await supabase
+      
+      // Prima proviamo a fetch senza la relazione per vedere se funziona
+      const { data: seriesData, error: seriesError } = await supabase
         .from('series')
-        .select(`
-          *,
-          category:categories!series_category_id_fkey(*),
-          episodes(*)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
 
-      if (error) {
-        console.error('Error fetching series:', error)
-        throw error
+      if (seriesError) {
+        console.error('Error fetching series basic data:', seriesError)
+        throw seriesError
       }
 
-      console.log('Series fetched:', data)
+      console.log('Series basic data fetched:', seriesData)
 
-      const seriesWithCount = data?.map(s => ({
-        ...s,
-        episode_count: s.episodes?.length || 0
-      })) || []
+      // Ora proviamo a fetch le categorie separatamente
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('categories')
+        .select('*')
 
-      setSeries(seriesWithCount)
+      if (categoriesError) {
+        console.error('Error fetching categories:', categoriesError)
+      }
+
+      console.log('Categories data fetched:', categoriesData)
+
+      // Ora proviamo a fetch gli episodi separatamente
+      const { data: episodesData, error: episodesError } = await supabase
+        .from('episodes')
+        .select('*')
+
+      if (episodesError) {
+        console.error('Error fetching episodes:', episodesError)
+      }
+
+      console.log('Episodes data fetched:', episodesData)
+
+      // Combiniamo i dati manualmente
+      const seriesWithRelations = seriesData?.map(s => {
+        const category = categoriesData?.find(c => c.id === s.category_id)
+        const seriesEpisodes = episodesData?.filter(e => e.series_id === s.id) || []
+        
+        return {
+          ...s,
+          category,
+          episodes: seriesEpisodes,
+          episode_count: seriesEpisodes.length
+        }
+      }) || []
+
+      console.log('Series with relations:', seriesWithRelations)
+
+      setSeries(seriesWithRelations)
       
       // Imposta la serie in evidenza (la prima con episodi)
-      const featured = seriesWithCount.find(s => s.episodes && s.episodes.length > 0)
+      const featured = seriesWithRelations.find(s => s.episodes && s.episodes.length > 0)
       if (featured) {
         setFeaturedSeries(featured)
       }
@@ -51,7 +82,7 @@ export function useSeries() {
       console.error('Error in fetchSeries:', error)
       toast({
         title: "Errore",
-        description: "Impossibile caricare le serie",
+        description: `Impossibile caricare le serie: ${error.message}`,
         variant: "destructive"
       })
     } finally {
@@ -111,11 +142,7 @@ export function useSeries() {
       const { data, error } = await supabase
         .from('series')
         .insert(seriesPayload)
-        .select(`
-          *,
-          category:categories!series_category_id_fkey(*),
-          episodes(*)
-        `)
+        .select('*')
         .single()
 
       if (error) {

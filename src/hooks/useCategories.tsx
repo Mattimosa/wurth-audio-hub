@@ -30,6 +30,7 @@ export function useCategories() {
       
       // Se non ci sono categorie, creane alcune di default
       if (!data || data.length === 0) {
+        console.log('No categories found, creating default ones...')
         await createDefaultCategories()
         return
       }
@@ -39,7 +40,7 @@ export function useCategories() {
       console.error('Error in fetchCategories:', error)
       toast({
         title: "Errore",
-        description: "Impossibile caricare le categorie",
+        description: `Impossibile caricare le categorie: ${error.message}`,
         variant: "destructive"
       })
     } finally {
@@ -71,6 +72,11 @@ export function useCategories() {
       setCategories(data || [])
     } catch (error) {
       console.error('Error creating default categories:', error)
+      toast({
+        title: "Errore",
+        description: `Impossibile creare le categorie di default: ${error.message}`,
+        variant: "destructive"
+      })
     }
   }
 

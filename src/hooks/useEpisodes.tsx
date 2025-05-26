@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { Episode } from '@/types/database'
@@ -21,27 +22,46 @@ export function useEpisodes(seriesId?: string) {
 
     try {
       console.log('Fetching episodes for series:', seriesId)
-      const { data, error } = await supabase
+      
+      // Prima proviamo a fetch gli episodi base
+      const { data: episodesData, error: episodesError } = await supabase
         .from('episodes')
-        .select(`
-          *,
-          series:series(*)
-        `)
+        .select('*')
         .eq('series_id', seriesId)
         .order('published_at', { ascending: false })
 
-      if (error) {
-        console.error('Error fetching episodes:', error)
-        throw error
+      if (episodesError) {
+        console.error('Error fetching episodes:', episodesError)
+        throw episodesError
       }
 
-      console.log('Episodes fetched:', data)
-      setEpisodes(data || [])
+      console.log('Episodes fetched:', episodesData)
+      
+      // Ora proviamo a fetch la serie separatamente
+      const { data: seriesData, error: seriesError } = await supabase
+        .from('series')
+        .select('*')
+        .eq('id', seriesId)
+        .single()
+
+      if (seriesError) {
+        console.error('Error fetching series for episodes:', seriesError)
+      }
+
+      console.log('Series data for episodes:', seriesData)
+
+      // Combiniamo i dati manualmente
+      const episodesWithSeries = episodesData?.map(episode => ({
+        ...episode,
+        series: seriesData
+      })) || []
+
+      setEpisodes(episodesWithSeries)
     } catch (error) {
       console.error('Error in fetchEpisodes:', error)
       toast({
         title: "Errore",
-        description: "Impossibile caricare gli episodi",
+        description: `Impossibile caricare gli episodi: ${error.message}`,
         variant: "destructive"
       })
     } finally {
@@ -123,10 +143,7 @@ export function useEpisodes(seriesId?: string) {
       const { data, error } = await supabase
         .from('episodes')
         .insert(episodePayload)
-        .select(`
-          *,
-          series:series(*)
-        `)
+        .select('*')
         .single()
 
       if (error) {
