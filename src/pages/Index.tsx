@@ -2,30 +2,27 @@
 import React from 'react';
 import MainLayout from '../layouts/MainLayout';
 import HeroSection from '../components/HeroSection';
-import FeaturedContent from '../components/FeaturedContent';
-import QuickActions from '../components/QuickActions';
-import LiveUpdates from '../components/LiveUpdates';
-import PopularCategories from '../components/PopularCategories';
-import RecentEpisodes from '../components/RecentEpisodes';
+import NewsSection from '../components/NewsSection';
+import TrendingSection from '../components/TrendingSection';
+import CategoryShowcase from '../components/CategoryShowcase';
+import RecommendedPodcasts from '../components/RecommendedPodcasts';
+import PodcastCard from '../components/PodcastCard';
 import { useSeries } from '../hooks/useSeries';
-import { Headphones, Loader2 } from 'lucide-react';
+import { Sparkles, Users } from 'lucide-react';
 
 const Index = () => {
-  const { series, loading } = useSeries();
+  const { series, featuredSeries, loading } = useSeries();
 
   if (loading) {
     return (
       <MainLayout>
         <div className="flex items-center justify-center min-h-96">
-          <div className="flex flex-col items-center space-y-4">
-            <div className="relative">
-              <Loader2 className="w-12 h-12 text-wurth-red animate-spin" />
-              <div className="absolute inset-0 w-12 h-12 rounded-full border-2 border-wurth-red/20"></div>
+          <div className="animate-pulse flex flex-col items-center">
+            <div className="w-16 h-16 bg-wurth-red rounded-full mb-4 animate-pulse-subtle relative">
+              <div className="absolute inset-0 bg-wurth-red rounded-full animate-ping opacity-20"></div>
             </div>
-            <div className="text-center">
-              <h3 className="text-white text-xl font-semibold mb-2">Caricamento Würth Podcast</h3>
-              <p className="text-gray-400 text-sm">Preparando i contenuti formativi...</p>
-            </div>
+            <div className="text-white text-xl font-semibold animate-fade-in">Caricamento contenuti...</div>
+            <div className="text-gray-400 text-sm mt-2 animate-fade-in" style={{ animationDelay: '0.2s' }}>Preparando i tuoi podcast</div>
           </div>
         </div>
       </MainLayout>
@@ -34,76 +31,84 @@ const Index = () => {
 
   return (
     <MainLayout>
-      <div className="space-y-12 pb-8 overflow-hidden">
-        {/* Welcome Banner - Fixed positioning and spacing */}
-        <section className="relative bg-gradient-to-r from-wurth-red/10 via-red-900/20 to-transparent rounded-xl p-8 border border-wurth-red/20 animate-fade-in">
-          <div className="flex items-start space-x-4 mb-6">
-            <div className="bg-wurth-red/20 p-3 rounded-full flex-shrink-0">
-              <Headphones className="w-8 h-8 text-wurth-red" />
-            </div>
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-white mb-2">Benvenuto su Würth Podcast</h1>
-              <p className="text-gray-300 text-lg">La piattaforma formativa dedicata al team Würth</p>
-            </div>
-          </div>
-          <p className="text-gray-400 leading-relaxed max-w-4xl">
-            Accedi ai contenuti formativi, aggiornamenti tecnici e sessioni di sviluppo professionale 
-            pensati per valorizzare le competenze del nostro team.
-          </p>
-        </section>
-
-        {/* Hero Section - Better spacing */}
-        <div className="animate-slide-up" style={{ animationDelay: '0.2s' }}>
-          <HeroSection />
-        </div>
-
-        {/* Quick Actions - Improved animation */}
-        <div className="animate-slide-up" style={{ animationDelay: '0.4s' }}>
-          <QuickActions />
-        </div>
-
-        {/* Featured Content - Staggered animation */}
-        <div className="animate-slide-up" style={{ animationDelay: '0.6s' }}>
-          <FeaturedContent />
-        </div>
-
-        {/* Live Updates - Better positioning */}
-        <div className="animate-slide-up" style={{ animationDelay: '0.8s' }}>
-          <LiveUpdates />
-        </div>
-
-        {/* Popular Categories - Enhanced spacing */}
-        <div className="animate-slide-up" style={{ animationDelay: '1s' }}>
-          <PopularCategories />
-        </div>
-
-        {/* Recent Episodes - Improved layout */}
-        <div className="animate-slide-up" style={{ animationDelay: '1.2s' }}>
-          <RecentEpisodes />
-        </div>
-
-        {/* User Series if available - Better integration */}
+      <div className="space-y-12">
+        {/* Hero Section */}
+        <HeroSection />
+        
+        {/* News Section */}
+        <NewsSection />
+        
+        {/* Trending Section */}
+        <TrendingSection />
+        
+        {/* Category Showcase */}
+        <CategoryShowcase />
+        
+        {/* Serie Personali (se presenti) */}
         {series.length > 0 && (
-          <div className="animate-slide-up" style={{ animationDelay: '1.4s' }}>
-            <section className="bg-wurth-gray/50 rounded-xl p-8 backdrop-blur-sm border border-gray-700/50">
-              <h2 className="text-2xl font-bold text-white mb-6">I Tuoi Contenuti</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {series.slice(0, 3).map((podcast, index) => (
-                  <div 
-                    key={podcast.id} 
-                    className="bg-gray-700/80 rounded-lg p-6 hover:bg-gray-600/80 transition-all duration-300 transform hover:scale-105 hover:shadow-xl group animate-scale-in"
-                    style={{ animationDelay: `${1.6 + index * 0.1}s` }}
-                  >
-                    <h3 className="text-white font-semibold mb-3 group-hover:text-wurth-red transition-colors">
-                      {podcast.title}
-                    </h3>
-                    <p className="text-gray-400 text-sm leading-relaxed">{podcast.description}</p>
-                  </div>
-                ))}
+          <section className="mb-12 animate-fade-in">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-3xl font-bold text-white mb-2 flex items-center space-x-2">
+                  <Sparkles className="w-8 h-8 text-wurth-red" />
+                  <span>I Tuoi Contenuti</span>
+                </h2>
+                <p className="text-gray-400">Serie e podcast che hai creato</p>
               </div>
-            </section>
-          </div>
+              <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs font-bold px-3 py-1 rounded-full animate-pulse flex items-center space-x-1">
+                <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
+                <span>ATTIVO</span>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {series.map((podcast, index) => (
+                <div 
+                  key={podcast.id} 
+                  className="relative animate-fade-in hover-scale"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <PodcastCard podcast={podcast} />
+                  <div className="absolute top-2 right-2 bg-gradient-to-r from-green-400 to-emerald-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
+                    LIVE
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
         )}
+        
+        {/* Recommended Podcasts */}
+        <RecommendedPodcasts />
+        
+        {/* Call to Action per colleghi */}
+        <section className="mb-12 animate-fade-in">
+          <div className="relative bg-gradient-to-r from-wurth-red via-red-600 to-red-700 rounded-xl p-8 text-center overflow-hidden shadow-2xl">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 translate-x-full group-hover:translate-x-0 transition-transform duration-1000"></div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center justify-center mb-4">
+                <div className="bg-white/20 rounded-full p-3 mr-3">
+                  <Users className="w-8 h-8 text-white" />
+                </div>
+                <h2 className="text-3xl font-bold text-white">Condividi la Tua Esperienza</h2>
+              </div>
+              
+              <p className="text-red-100 text-lg mb-6 max-w-2xl mx-auto">
+                Hai competenze e conoscenze da condividere con i colleghi? Crea il tuo podcast e contribuisci alla crescita professionale del team Würth.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button className="bg-white text-wurth-red font-bold py-3 px-8 rounded-full hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-xl">
+                  Crea il tuo podcast
+                </button>
+                <button className="border-2 border-white text-white font-bold py-3 px-8 rounded-full hover:bg-white hover:text-wurth-red transition-all duration-300 transform hover:scale-105">
+                  Scopri come iniziare
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     </MainLayout>
   );
