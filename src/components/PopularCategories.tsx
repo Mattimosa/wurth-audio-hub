@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Wrench, Shield, Car, Lightbulb, Users, BookOpen, TrendingUp } from 'lucide-react';
+import { Wrench, Shield, Car, Lightbulb, Users, BookOpen, TrendingUp, ArrowRight } from 'lucide-react';
 
 const PopularCategories = () => {
   const categories = [
@@ -56,42 +56,68 @@ const PopularCategories = () => {
   ];
 
   return (
-    <section>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-white">Categorie Popolari</h2>
+    <section className="space-y-8">
+      <div className="flex items-center justify-between">
+        <div className="space-y-2">
+          <h2 className="text-3xl font-bold text-white">Categorie Popolari</h2>
+          <p className="text-gray-400">Esplora i contenuti più seguiti dal team</p>
+        </div>
         <Link 
           to="/search" 
-          className="text-wurth-red hover:text-red-400 font-medium text-sm transition-colors"
+          className="group flex items-center space-x-2 text-wurth-red hover:text-red-400 font-semibold transition-all duration-300 bg-wurth-red/10 hover:bg-wurth-red/20 px-4 py-2 rounded-full"
         >
-          Esplora tutte
+          <span>Esplora tutte</span>
+          <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
         </Link>
       </div>
       
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {categories.map((category) => {
+        {categories.map((category, index) => {
           const IconComponent = category.icon;
           return (
             <Link
               key={category.id}
               to={`/category/${category.id}`}
-              className="bg-wurth-gray rounded-lg p-4 hover:bg-gray-700 transition-all duration-300 transform hover:scale-105 group relative"
+              className="group bg-wurth-gray/80 backdrop-blur-sm rounded-xl p-6 hover:bg-gray-700/80 transition-all duration-500 transform hover:scale-105 hover:shadow-xl border border-gray-700/50 hover:border-gray-600/50 relative overflow-hidden animate-scale-in"
+              style={{ animationDelay: `${index * 0.1}s` }}
             >
+              {/* Trending indicator */}
               {category.trending && (
-                <div className="absolute top-2 right-2">
-                  <TrendingUp className="w-3 h-3 text-green-400" />
+                <div className="absolute top-3 right-3 z-10">
+                  <div className="bg-green-500/20 backdrop-blur-sm rounded-full p-1 border border-green-500/30">
+                    <TrendingUp className="w-3 h-3 text-green-400" />
+                  </div>
                 </div>
               )}
               
-              <div className={`inline-flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br ${category.color} mb-3 group-hover:scale-110 transition-transform duration-300`}>
-                <IconComponent className="w-5 h-5 text-white" />
-              </div>
+              {/* Background gradient */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${category.color} opacity-0 group-hover:opacity-10 transition-all duration-500`} />
               
-              <h3 className="text-white font-medium text-sm mb-1 group-hover:text-wurth-red transition-colors">
-                {category.name}
-              </h3>
-              <p className="text-gray-400 text-xs">
-                {category.count} episodi
-              </p>
+              <div className="relative space-y-4">
+                {/* Icon */}
+                <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br ${category.color} shadow-lg group-hover:scale-110 transition-all duration-500`}>
+                  <IconComponent className="w-6 h-6 text-white" />
+                </div>
+                
+                {/* Content */}
+                <div className="space-y-2">
+                  <h3 className="text-white font-semibold text-sm leading-tight group-hover:text-wurth-red transition-colors duration-300">
+                    {category.name}
+                  </h3>
+                  <p className="text-gray-400 text-xs group-hover:text-gray-300 transition-colors duration-300">
+                    {category.count} episodi
+                  </p>
+                </div>
+
+                {/* Progress indicator */}
+                <div className="opacity-0 group-hover:opacity-100 transition-all duration-300">
+                  <div className="w-full h-0.5 bg-gray-600 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full bg-gradient-to-r ${category.color} rounded-full transition-all duration-700 transform translate-x-[-100%] group-hover:translate-x-0`}
+                    ></div>
+                  </div>
+                </div>
+              </div>
             </Link>
           );
         })}

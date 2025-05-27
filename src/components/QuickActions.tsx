@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Play, Search, BookOpen, Settings, Mic, Headphones } from 'lucide-react';
+import { Search, BookOpen, Settings, Mic } from 'lucide-react';
 
 const QuickActions = () => {
   const actions = [
@@ -36,28 +36,48 @@ const QuickActions = () => {
   ];
 
   return (
-    <section>
-      <h2 className="text-xl font-bold text-white mb-6">Azioni Rapide</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <section className="space-y-8">
+      <div className="text-center space-y-4">
+        <h2 className="text-3xl font-bold text-white">Azioni Rapide</h2>
+        <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+          Accedi rapidamente alle funzionalità principali della piattaforma
+        </p>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {actions.map((action, index) => {
           const IconComponent = action.icon;
           return (
             <Link
               key={index}
               to={action.href}
-              className="group relative bg-wurth-gray rounded-xl p-6 hover:bg-gray-700 transition-all duration-300 transform hover:scale-105"
+              className="group relative bg-wurth-gray/80 backdrop-blur-sm rounded-2xl p-8 hover:bg-gray-700/80 transition-all duration-500 transform hover:scale-105 hover:shadow-2xl border border-gray-700/50 hover:border-gray-600/50 animate-scale-in"
+              style={{ animationDelay: `${index * 0.1}s` }}
             >
-              <div className={`absolute inset-0 bg-gradient-to-br ${action.color} opacity-0 group-hover:opacity-10 rounded-xl transition-opacity duration-300`} />
-              <div className="relative">
-                <div className={`inline-flex items-center justify-center w-12 h-12 rounded-lg bg-gradient-to-br ${action.color} mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                  <IconComponent className="w-6 h-6 text-white" />
+              {/* Background gradient overlay */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${action.color} opacity-0 group-hover:opacity-20 rounded-2xl transition-all duration-500`} />
+              
+              {/* Content */}
+              <div className="relative space-y-6">
+                {/* Icon */}
+                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${action.color} shadow-lg group-hover:scale-110 transition-all duration-500 group-hover:shadow-xl`}>
+                  <IconComponent className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-white font-semibold mb-2 group-hover:text-wurth-red transition-colors">
-                  {action.title}
-                </h3>
-                <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-colors">
-                  {action.description}
-                </p>
+                
+                {/* Text content */}
+                <div className="space-y-3">
+                  <h3 className="text-white font-bold text-xl group-hover:text-wurth-red transition-colors duration-300">
+                    {action.title}
+                  </h3>
+                  <p className="text-gray-400 text-sm leading-relaxed group-hover:text-gray-300 transition-colors duration-300">
+                    {action.description}
+                  </p>
+                </div>
+
+                {/* Hover indicator */}
+                <div className="opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                  <div className="w-full h-1 bg-gradient-to-r from-transparent via-wurth-red to-transparent rounded-full"></div>
+                </div>
               </div>
             </Link>
           );

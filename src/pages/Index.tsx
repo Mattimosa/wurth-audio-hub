@@ -34,53 +34,75 @@ const Index = () => {
 
   return (
     <MainLayout>
-      <div className="space-y-8 pb-8">
-        {/* Welcome Banner */}
-        <section className="bg-gradient-to-r from-wurth-red/10 via-red-900/20 to-transparent rounded-xl p-6 border border-wurth-red/20">
-          <div className="flex items-center space-x-3 mb-4">
-            <Headphones className="w-8 h-8 text-wurth-red" />
-            <div>
-              <h1 className="text-2xl font-bold text-white">Benvenuto su Würth Podcast</h1>
-              <p className="text-gray-300">La piattaforma formativa dedicata al team Würth</p>
+      <div className="space-y-12 pb-8 overflow-hidden">
+        {/* Welcome Banner - Fixed positioning and spacing */}
+        <section className="relative bg-gradient-to-r from-wurth-red/10 via-red-900/20 to-transparent rounded-xl p-8 border border-wurth-red/20 animate-fade-in">
+          <div className="flex items-start space-x-4 mb-6">
+            <div className="bg-wurth-red/20 p-3 rounded-full flex-shrink-0">
+              <Headphones className="w-8 h-8 text-wurth-red" />
+            </div>
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-white mb-2">Benvenuto su Würth Podcast</h1>
+              <p className="text-gray-300 text-lg">La piattaforma formativa dedicata al team Würth</p>
             </div>
           </div>
-          <p className="text-gray-400 leading-relaxed">
+          <p className="text-gray-400 leading-relaxed max-w-4xl">
             Accedi ai contenuti formativi, aggiornamenti tecnici e sessioni di sviluppo professionale 
             pensati per valorizzare le competenze del nostro team.
           </p>
         </section>
 
-        {/* Hero Section */}
-        <HeroSection />
+        {/* Hero Section - Better spacing */}
+        <div className="animate-slide-up" style={{ animationDelay: '0.2s' }}>
+          <HeroSection />
+        </div>
 
-        {/* Quick Actions */}
-        <QuickActions />
+        {/* Quick Actions - Improved animation */}
+        <div className="animate-slide-up" style={{ animationDelay: '0.4s' }}>
+          <QuickActions />
+        </div>
 
-        {/* Featured Content */}
-        <FeaturedContent />
+        {/* Featured Content - Staggered animation */}
+        <div className="animate-slide-up" style={{ animationDelay: '0.6s' }}>
+          <FeaturedContent />
+        </div>
 
-        {/* Live Updates */}
-        <LiveUpdates />
+        {/* Live Updates - Better positioning */}
+        <div className="animate-slide-up" style={{ animationDelay: '0.8s' }}>
+          <LiveUpdates />
+        </div>
 
-        {/* Popular Categories */}
-        <PopularCategories />
+        {/* Popular Categories - Enhanced spacing */}
+        <div className="animate-slide-up" style={{ animationDelay: '1s' }}>
+          <PopularCategories />
+        </div>
 
-        {/* Recent Episodes */}
-        <RecentEpisodes />
+        {/* Recent Episodes - Improved layout */}
+        <div className="animate-slide-up" style={{ animationDelay: '1.2s' }}>
+          <RecentEpisodes />
+        </div>
 
-        {/* User Series if available */}
+        {/* User Series if available - Better integration */}
         {series.length > 0 && (
-          <section className="bg-wurth-gray rounded-xl p-6">
-            <h2 className="text-xl font-bold text-white mb-4">I Tuoi Contenuti</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {series.slice(0, 3).map((podcast) => (
-                <div key={podcast.id} className="bg-gray-700 rounded-lg p-4 hover:bg-gray-600 transition-colors">
-                  <h3 className="text-white font-semibold mb-2">{podcast.title}</h3>
-                  <p className="text-gray-400 text-sm">{podcast.description}</p>
-                </div>
-              ))}
-            </div>
-          </section>
+          <div className="animate-slide-up" style={{ animationDelay: '1.4s' }}>
+            <section className="bg-wurth-gray/50 rounded-xl p-8 backdrop-blur-sm border border-gray-700/50">
+              <h2 className="text-2xl font-bold text-white mb-6">I Tuoi Contenuti</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {series.slice(0, 3).map((podcast, index) => (
+                  <div 
+                    key={podcast.id} 
+                    className="bg-gray-700/80 rounded-lg p-6 hover:bg-gray-600/80 transition-all duration-300 transform hover:scale-105 hover:shadow-xl group animate-scale-in"
+                    style={{ animationDelay: `${1.6 + index * 0.1}s` }}
+                  >
+                    <h3 className="text-white font-semibold mb-3 group-hover:text-wurth-red transition-colors">
+                      {podcast.title}
+                    </h3>
+                    <p className="text-gray-400 text-sm leading-relaxed">{podcast.description}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
         )}
       </div>
     </MainLayout>
