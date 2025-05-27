@@ -8,7 +8,7 @@ import CategoryShowcase from '../components/CategoryShowcase';
 import RecommendedPodcasts from '../components/RecommendedPodcasts';
 import PodcastCard from '../components/PodcastCard';
 import { useSeries } from '../hooks/useSeries';
-import { Sparkles, Users } from 'lucide-react';
+import { Sparkles, Users, Headphones, Zap } from 'lucide-react';
 
 const Index = () => {
   const { series, featuredSeries, loading } = useSeries();
@@ -32,6 +32,43 @@ const Index = () => {
   return (
     <MainLayout>
       <div className="space-y-12">
+        {/* Intro Section - Nuova sezione introduttiva */}
+        <section className="mb-8 animate-fade-in">
+          <div className="relative bg-gradient-to-r from-wurth-red/10 via-red-900/20 to-transparent rounded-xl p-8 border border-wurth-red/20 overflow-hidden">
+            <div className="absolute top-4 right-4">
+              <div className="flex items-center space-x-2">
+                <Headphones className="w-6 h-6 text-wurth-red animate-pulse" />
+                <Zap className="w-5 h-5 text-yellow-400" />
+              </div>
+            </div>
+            
+            <div className="relative z-10">
+              <h1 className="text-2xl md:text-3xl font-bold text-white mb-3 leading-tight">
+                Il Futuro dell'Informazione è qui.
+              </h1>
+              <p className="text-lg text-gray-300 mb-4 max-w-3xl">
+                <span className="text-wurth-red font-semibold">Würth Podcast</span> - 
+                Un nuovo modo di crescere professionalmente. Scopri innovazione, competenze e visione 
+                attraverso contenuti formativi pensati per il nostro team.
+              </p>
+              <div className="flex items-center space-x-6 text-sm text-gray-400">
+                <div className="flex items-center space-x-1">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span>Sempre aggiornato</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <div className="w-2 h-2 bg-wurth-red rounded-full"></div>
+                  <span>Contenuti esclusivi</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                  <span>Per il team Würth</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        
         {/* Hero Section */}
         <HeroSection />
         

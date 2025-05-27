@@ -1,163 +1,197 @@
 
 import React from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import PodcastCard from '../components/PodcastCard';
-import { Podcast, Headphones } from 'lucide-react';
 import { useSeries } from '../hooks/useSeries';
-import { MainLayoutContext } from '../layouts/MainLayout';
-import { useContext } from 'react';
+import { ArrowLeft, Filter, SortAsc, Users, Clock, Star, TrendingUp } from 'lucide-react';
 
 const Category = () => {
-  const { categoryName = "Tutti" } = useParams<{ categoryName: string }>();
-  const { series } = useSeries();
-  const { setCurrentEpisode, setIsPlaying } = useContext(MainLayoutContext);
+  const { categoryName } = useParams();
+  const { series, categories } = useSeries();
   
-  // Filter series by category
-  const filteredSeries = categoryName === "Tutti" 
-    ? series 
-    : series.filter(s => s.category?.name === categoryName);
-  
-  // Set background colors based on category
-  const getCategoryStyle = () => {
-    switch(categoryName) {
-      case "Digitale":
-        return "from-purple-700 to-black";
-      case "Costruzioni":
-        return "from-yellow-700 to-black";
-      case "Automotive":
-        return "from-blue-700 to-black";
-      case "Industria":
-        return "from-green-700 to-black";
-      case "Sicurezza":
-        return "from-red-700 to-black";
-      case "Tecnica":
-        return "from-orange-700 to-black";
-      case "Formazione":
-        return "from-teal-700 to-black";
-      default:
-        return "from-wurth-red to-black";
-    }
-  };
-  
-  // Custom code icon component for digital category
-  const CodeIcon = (props: any) => (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polyline points="16 18 22 12 16 6" />
-      <polyline points="8 6 2 12 8 18" />
-    </svg>
+  // Trova la categoria
+  const category = categories.find(cat => 
+    cat.name.toLowerCase().replace(/\s+/g, '-') === categoryName?.toLowerCase()
   );
   
-  // Get appropriate icon based on category
-  const getCategoryIcon = () => {
-    if (categoryName === "Digitale") {
-      return <CodeIcon className="h-12 w-12 text-white opacity-80" />;
-    }
-    return <Podcast className="h-12 w-12 text-white opacity-80" />;
+  // Filtra le serie per categoria
+  const categorySeries = series.filter(s => 
+    s.category?.name === category?.name
+  );
+
+  const categoryStats = {
+    totalSeries: categorySeries.length,
+    totalEpisodes: categorySeries.reduce((acc, s) => acc + (s.episodes?.length || 0), 0),
+    avgRating: "4.7",
+    totalListeners: "Team Würth"
   };
 
-  const playEpisode = (seriesItem: any, episodeIndex: number) => {
-    if (seriesItem.episodes && seriesItem.episodes.length > episodeIndex) {
-      setCurrentEpisode(seriesItem.episodes[episodeIndex]);
-      setIsPlaying(true);
-    }
-  };
-  
+  if (!category) {
+    return (
+      <MainLayout>
+        <div className="text-center py-12">
+          <h1 className="text-2xl font-bold text-white mb-4">Categoria non trovata</h1>
+          <a href="/" className="text-wurth-red hover:text-red-400">
+            Torna alla homepage
+          </a>
+        </div>
+      </MainLayout>
+    );
+  }
+
   return (
     <MainLayout>
       <div className="mb-8">
-        <div className={`bg-gradient-to-r ${getCategoryStyle()} p-8 rounded-lg mb-8`}>
-          <div className="flex items-center">
-            <div className="mr-4">
-              {getCategoryIcon()}
-            </div>
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-white">{categoryName}</h1>
-              <p className="text-gray-200 mt-2">
-                {categoryName === "Tutti" 
-                  ? "Tutti i podcast disponibili su Würth Podcast" 
-                  : `Podcast della categoria ${categoryName} - ${filteredSeries.length} serie disponibili`}
-              </p>
+        {/* Breadcrumb */}
+        <div className="flex items-center space-x-2 text-gray-400 mb-6">
+          <a href="/" className="hover:text-white transition-colors">Home</a>
+          <span>•</span>
+          <span className="text-white">{category.name}</span>
+        </div>
+
+        {/* Header della categoria */}
+        <div className="relative bg-gradient-to-r from-wurth-red to-red-800 rounded-xl p-8 mb-8 overflow-hidden">
+          <div className="absolute top-4 left-4">
+            <button 
+              onClick={() => window.history.back()}
+              className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          </div>
+          
+          <div className="relative z-10 pt-8">
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">{category.name}</h1>
+            <p className="text-red-100 text-lg mb-6 max-w-2xl">
+              {category.description || `Contenuti formativi e informativi per la categoria ${category.name}`}
+            </p>
+            
+            {/* Statistiche categoria */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                <div className="flex items-center space-x-2">
+                  <Users className="w-5 h-5 text-white" />
+                  <div>
+                    <p className="text-red-100 text-sm">Serie</p>
+                    <p className="text-white text-xl font-bold">{categoryStats.totalSeries}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                <div className="flex items-center space-x-2">
+                  <Clock className="w-5 h-5 text-white" />
+                  <div>
+                    <p className="text-red-100 text-sm">Episodi</p>
+                    <p className="text-white text-xl font-bold">{categoryStats.totalEpisodes}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                <div className="flex items-center space-x-2">
+                  <Star className="w-5 h-5 text-yellow-400" />
+                  <div>
+                    <p className="text-red-100 text-sm">Rating</p>
+                    <p className="text-white text-xl font-bold">{categoryStats.avgRating}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                <div className="flex items-center space-x-2">
+                  <TrendingUp className="w-5 h-5 text-green-400" />
+                  <div>
+                    <p className="text-red-100 text-sm">Audience</p>
+                    <p className="text-white text-lg font-bold">{categoryStats.totalListeners}</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Controlli filtri e ordinamento */}
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-white">
+            Contenuti in {category.name} ({categorySeries.length})
+          </h2>
+          <div className="flex items-center space-x-3">
+            <button className="flex items-center space-x-2 bg-wurth-gray hover:bg-gray-700 text-gray-300 px-4 py-2 rounded-lg transition-colors">
+              <Filter className="w-4 h-4" />
+              <span>Filtri</span>
+            </button>
+            <button className="flex items-center space-x-2 bg-wurth-gray hover:bg-gray-700 text-gray-300 px-4 py-2 rounded-lg transition-colors">
+              <SortAsc className="w-4 h-4" />
+              <span>Ordina</span>
+            </button>
+          </div>
+        </div>
         
-        {filteredSeries.length > 0 ? (
-          <>
-            <div className="flex items-center mb-6">
-              <Podcast className="mr-2 text-wurth-red" />
-              <h2 className="text-xl font-bold text-white">Serie Podcast</h2>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-              {filteredSeries.map((seriesItem) => (
-                <PodcastCard key={seriesItem.id} podcast={seriesItem} />
-              ))}
-            </div>
-            
-            <div className="mt-12">
-              <div className="flex items-center mb-6">
-                <Headphones className="mr-2 text-wurth-red" />
-                <h2 className="text-xl font-bold text-white">Episodi Recenti</h2>
+        {/* Griglia contenuti */}
+        {categorySeries.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            {categorySeries.map((seriesItem, index) => (
+              <div 
+                key={seriesItem.id}
+                className="animate-fade-in"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <PodcastCard podcast={seriesItem} />
               </div>
-              {filteredSeries.some(seriesItem => seriesItem.episodes && seriesItem.episodes.length > 0) ? (
-                <div className="space-y-4">
-                  {filteredSeries
-                    .filter(seriesItem => seriesItem.episodes && seriesItem.episodes.length > 0)
-                    .flatMap(seriesItem => 
-                      seriesItem.episodes!.slice(0, 1).map(episode => (
-                        <div 
-                          key={episode.id} 
-                          className="bg-wurth-gray p-4 rounded-md hover:bg-gray-800 transition-colors cursor-pointer"
-                          onClick={() => playEpisode(seriesItem, seriesItem.episodes!.findIndex((ep: any) => ep.id === episode.id))}
-                        >
-                          <div className="flex items-center">
-                            <img 
-                              src={episode.cover_url || seriesItem.cover_url || "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158"} 
-                              alt={episode.title}
-                              className="w-16 h-16 object-cover rounded mr-4" 
-                            />
-                            <div className="flex-1">
-                              <h3 className="font-medium text-white">{episode.title}</h3>
-                              <Link to={`/podcast/${seriesItem.id}`} className="text-sm text-gray-400 line-clamp-1 hover:text-wurth-red">
-                                {seriesItem.title}
-                              </Link>
-                            </div>
-                            <div className="text-sm text-gray-400">
-                              {episode.duration ? `${Math.floor(episode.duration / 60)}:${(episode.duration % 60).toString().padStart(2, '0')}` : '--:--'}
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    )
-                  }
-                </div>
-              ) : (
-                <p className="text-gray-400 text-center py-8">
-                  Nessun episodio trovato per questa categoria. 
-                  <a href="/admin" className="text-wurth-red ml-1 hover:underline">
-                    Aggiungi un nuovo episodio
-                  </a>
-                </p>
-              )}
-            </div>
-          </>
+            ))}
+          </div>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-gray-400">Nessun podcast trovato in questa categoria.</p>
-            <a href="/admin" className="text-wurth-red mt-2 inline-block hover:underline">
-              Aggiungi un nuovo podcast
-            </a>
+          <div className="text-center py-16">
+            <div className="bg-wurth-gray rounded-xl p-8 max-w-md mx-auto">
+              <div className="w-16 h-16 bg-gray-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Nessun contenuto disponibile</h3>
+              <p className="text-gray-400 mb-6">
+                Non ci sono ancora contenuti in questa categoria. Torna presto per nuovi aggiornamenti!
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <a 
+                  href="/" 
+                  className="bg-wurth-red hover:bg-red-600 text-white px-6 py-2 rounded-full transition-colors"
+                >
+                  Esplora altre categorie
+                </a>
+                <a 
+                  href="/admin" 
+                  className="border border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white px-6 py-2 rounded-full transition-colors"
+                >
+                  Aggiungi contenuto
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Categorie correlate */}
+        {categories.length > 1 && (
+          <div className="mt-12">
+            <h3 className="text-xl font-bold text-white mb-6">Altre categorie</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {categories
+                .filter(cat => cat.id !== category.id)
+                .slice(0, 6)
+                .map(relatedCategory => (
+                  <a
+                    key={relatedCategory.id}
+                    href={`/category/${relatedCategory.name.toLowerCase().replace(/\s+/g, '-')}`}
+                    className="bg-wurth-gray hover:bg-gray-700 rounded-lg p-4 transition-colors group"
+                  >
+                    <div className="h-16 bg-gradient-to-br from-wurth-red to-red-800 rounded-lg mb-3 flex items-center justify-center group-hover:scale-105 transition-transform">
+                      <span className="text-white text-xs font-bold text-center px-2">
+                        {relatedCategory.name}
+                      </span>
+                    </div>
+                    <p className="text-gray-300 text-sm text-center group-hover:text-white transition-colors">
+                      {relatedCategory.name}
+                    </p>
+                  </a>
+                ))}
+            </div>
           </div>
         )}
       </div>
