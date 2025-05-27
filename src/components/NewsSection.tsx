@@ -6,51 +6,51 @@ const NewsSection = () => {
   const news = [
     {
       id: 1,
-      title: "Würth lancia la nuova gamma di prodotti per l'Industria 4.0",
-      summary: "Una rivoluzione tecnologica che cambierà il modo di lavorare nei cantieri moderni.",
+      title: "Nuovi percorsi formativi su Industria 4.0",
+      summary: "Scopri i nuovi contenuti formativi dedicati alle tecnologie industriali avanzate.",
       image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158",
       date: "2 giorni fa",
-      category: "Innovazione",
+      category: "Formazione",
       readTime: "3 min",
       trending: true,
       featured: true,
-      views: "12.5K"
+      views: "Team IT"
     },
     {
       id: 2,
-      title: "Sostenibilità: il nuovo programma green di Würth",
-      summary: "Obiettivo carbon neutral entro il 2030 con nuove iniziative eco-friendly.",
+      title: "Aggiornamenti sulla sicurezza nei cantieri",
+      summary: "Nuove procedure e best practices per la sicurezza sul lavoro.",
       image: "https://images.unsplash.com/photo-1518770660439-4636190af475",
       date: "5 giorni fa",
-      category: "Sostenibilità",
+      category: "Sicurezza",
       readTime: "5 min",
       trending: false,
       featured: false,
-      views: "8.3K"
+      views: "Team Cantieri"
     },
     {
       id: 3,
-      title: "Partnership strategica con leader tecnologici europei",
-      summary: "Nuove collaborazioni per accelerare la digitalizzazione industriale.",
+      title: "Collaborazione tra dipartimenti: caso di successo",
+      summary: "Come il lavoro di squadra ha migliorato l'efficienza operativa.",
       image: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b",
       date: "1 settimana fa",
-      category: "Business",
+      category: "Teamwork",
       readTime: "4 min",
       trending: true,
       featured: false,
-      views: "15.7K"
+      views: "Tutti i team"
     },
     {
       id: 4,
-      title: "Nuovi percorsi di formazione per i dipendenti Würth",
-      summary: "Programmi di sviluppo professionale e certificazioni digitali per tutto il personale.",
+      title: "Opportunità di crescita professionale in Würth",
+      summary: "Nuovi programmi di sviluppo e certificazioni disponibili per il personale.",
       image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6",
       date: "3 giorni fa",
-      category: "Formazione",
+      category: "Sviluppo",
       readTime: "6 min",
       trending: true,
       featured: true,
-      views: "9.8K"
+      views: "HR Team"
     }
   ];
 
@@ -58,11 +58,11 @@ const NewsSection = () => {
     <section className="mb-12">
       <div className="flex items-center justify-between mb-6 animate-fade-in">
         <div>
-          <h2 className="text-3xl font-bold text-white mb-2">News & Aggiornamenti</h2>
-          <p className="text-gray-400">Le ultime novità dal mondo Würth</p>
+          <h2 className="text-3xl font-bold text-white mb-2">Aggiornamenti e Novità</h2>
+          <p className="text-gray-400">Le ultime news dal team Würth</p>
         </div>
         <button className="text-wurth-red hover:text-red-400 flex items-center space-x-1 font-medium transition-all duration-300 hover:scale-105 group">
-          <span>Vedi tutte</span>
+          <span>Vedi tutti</span>
           <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
         </button>
       </div>
@@ -143,11 +143,11 @@ const NewsSection = () => {
       <div className="mt-8 bg-gradient-to-r from-wurth-red/10 to-transparent rounded-lg p-6 border border-wurth-red/20">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-white font-semibold mb-1">Rimani sempre aggiornato</h3>
-            <p className="text-gray-400 text-sm">Ricevi le ultime novità direttamente nella tua email</p>
+            <h3 className="text-white font-semibold mb-1">Resta aggiornato</h3>
+            <p className="text-gray-400 text-sm">Ricevi le comunicazioni interne direttamente</p>
           </div>
           <button className="bg-wurth-red hover:bg-red-600 text-white font-medium py-2 px-6 rounded-full transition-all duration-300 hover:scale-105">
-            Iscriviti
+            Notificami
           </button>
         </div>
       </div>

@@ -9,12 +9,12 @@ const HeroSection = () => {
 
   const featuredContent = {
     title: "Il Futuro dell'Industria 4.0",
-    subtitle: "SERIE ESCLUSIVA WÜRTH",
-    description: "Scopri come Würth sta rivoluzionando il settore industriale con tecnologie all'avanguardia. Un viaggio attraverso innovazione, sostenibilità e digitalizzazione.",
+    subtitle: "CONTENUTI FORMATIVI WÜRTH",
+    description: "Scopri come Würth sta evolvendo nel settore industriale con tecnologie all'avanguardia. Formazione, innovazione e competenze per il team.",
     image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158",
-    category: "Innovazione & Tecnologia",
-    duration: "6 episodi • Nuova serie",
-    listeners: "15.2K",
+    category: "Formazione Tecnica",
+    duration: "6 episodi • Serie completa",
+    listeners: "Team Würth",
     rating: "4.9"
   };
 
@@ -55,7 +55,7 @@ const HeroSection = () => {
             </div>
             <div className="flex items-center space-x-1">
               <Users className="w-4 h-4" />
-              <span className="text-sm">{featuredContent.listeners} ascoltatori</span>
+              <span className="text-sm">Per {featuredContent.listeners}</span>
             </div>
             <div className="flex items-center space-x-1">
               <span className="text-yellow-400">⭐</span>
@@ -71,10 +71,10 @@ const HeroSection = () => {
               onMouseLeave={() => setIsHovered(false)}
             >
               <Play className={`w-5 h-5 transition-transform duration-300 ${isHovered ? 'scale-110' : ''}`} />
-              <span>Ascolta ora</span>
+              <span>Inizia l'ascolto</span>
             </button>
             <button className="border-2 border-white text-white hover:bg-white hover:text-black font-bold py-3 px-8 rounded-full flex items-center space-x-2 transition-all duration-300 hover:shadow-xl">
-              <span>Scopri di più</span>
+              <span>Esplora contenuti</span>
               <ChevronRight className="w-5 h-5 transition-transform duration-300 hover:translate-x-1" />
             </button>
           </div>
@@ -95,7 +95,7 @@ const HeroSection = () => {
                 />
               ))}
             </div>
-            <span className="text-xs text-gray-400">Live Preview</span>
+            <span className="text-xs text-gray-400">Anteprima Audio</span>
           </div>
         </div>
       </div>

@@ -1,13 +1,12 @@
-
 import React from 'react';
 import { ArrowRight, Wrench, Car, Shield, Lightbulb, BookOpen, Users, TrendingUp, Award } from 'lucide-react';
 
 const CategoryShowcase = () => {
   const categories = [
     {
-      id: 'costruzioni',
-      name: 'Costruzioni & Edilizia',
-      description: 'Tecniche avanzate, materiali innovativi e best practices per il settore edilizio',
+      id: 'formazione-tecnica',
+      name: 'Formazione Tecnica',
+      description: 'Contenuti formativi e aggiornamenti tecnici per il team',
       icon: Wrench,
       color: 'from-blue-500 to-blue-700',
       episodeCount: 24,
@@ -15,19 +14,9 @@ const CategoryShowcase = () => {
       trending: true
     },
     {
-      id: 'automotive',
-      name: 'Automotive Solutions',
-      description: 'Il futuro della mobilità, diagnostica avanzata e soluzioni per officine',
-      icon: Car,
-      color: 'from-red-500 to-red-700',
-      episodeCount: 18,
-      image: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7",
-      trending: false
-    },
-    {
       id: 'sicurezza',
-      name: 'Sicurezza & Normative',
-      description: 'Aggiornamenti normativi, DPI innovativi e cultura della sicurezza',
+      name: 'Sicurezza & Procedure',
+      description: 'Protocolli di sicurezza e best practices per il lavoro quotidiano',
       icon: Shield,
       color: 'from-green-500 to-green-700',
       episodeCount: 32,
@@ -35,9 +24,9 @@ const CategoryShowcase = () => {
       trending: false
     },
     {
-      id: 'formazione',
-      name: 'Formazione & Crescita',
-      description: 'Percorsi di sviluppo professionale, competenze digitali e leadership',
+      id: 'sviluppo-professionale',
+      name: 'Sviluppo Professionale',
+      description: 'Opportunità di crescita, competenze e percorsi di carriera',
       icon: BookOpen,
       color: 'from-purple-500 to-purple-700',
       episodeCount: 28,
@@ -47,8 +36,8 @@ const CategoryShowcase = () => {
     },
     {
       id: 'innovazione',
-      name: 'Innovazione & R&D',
-      description: 'Ricerca e sviluppo, brevetti e tecnologie del futuro',
+      name: 'Innovazione & Ricerca',
+      description: 'Progetti innovativi e sviluppi futuri dell\'azienda',
       icon: Lightbulb,
       color: 'from-yellow-500 to-orange-600',
       episodeCount: 15,
@@ -56,9 +45,9 @@ const CategoryShowcase = () => {
       trending: false
     },
     {
-      id: 'business',
-      name: 'Business & Leadership',
-      description: 'Strategie aziendali, leadership e gestione del cambiamento',
+      id: 'leadership',
+      name: 'Leadership & Management',
+      description: 'Competenze manageriali e leadership per team leader',
       icon: Users,
       color: 'from-indigo-500 to-indigo-700',
       episodeCount: 21,
@@ -66,24 +55,13 @@ const CategoryShowcase = () => {
       trending: false
     },
     {
-      id: 'carriera',
-      name: 'Percorsi di Carriera',
-      description: 'Sviluppo professionale, mentoring e opportunità di crescita in Würth',
-      icon: TrendingUp,
-      color: 'from-emerald-500 to-teal-700',
-      episodeCount: 19,
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d",
-      trending: true,
-      featured: true
-    },
-    {
-      id: 'certificazioni',
-      name: 'Certificazioni & Competenze',
-      description: 'Certificazioni professionali, skill assessment e programmi di qualifica',
-      icon: Award,
-      color: 'from-rose-500 to-pink-700',
-      episodeCount: 16,
-      image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173",
+      id: 'automotive',
+      name: 'Settore Automotive',
+      description: 'Novità e aggiornamenti specifici per il settore automotive',
+      icon: Car,
+      color: 'from-red-500 to-red-700',
+      episodeCount: 18,
+      image: "https://images.unsplash.com/photo-1649972904349-6e44c42644a7",
       trending: false
     }
   ];
@@ -92,8 +70,8 @@ const CategoryShowcase = () => {
     <section className="mb-12">
       <div className="flex items-center justify-between mb-8">
         <div className="animate-fade-in">
-          <h2 className="text-3xl font-bold text-white mb-2">Esplora per Categorie</h2>
-          <p className="text-gray-400">Contenuti specializzati per ogni settore di competenza Würth</p>
+          <h2 className="text-3xl font-bold text-white mb-2">Aree di Competenza</h2>
+          <p className="text-gray-400">Contenuti organizzati per settore e competenza</p>
         </div>
         <button className="text-wurth-red hover:text-red-400 flex items-center space-x-1 font-medium transition-all duration-300 hover:scale-105">
           <span>Vedi tutte</span>
